@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+            http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+
+    <changeSet id="20231124-words-table.xml" author="Vitalik">
+        <createTable tableName="words">
+            <column name="UUID" type="UUID" defaultValue="gen_random_uuid()">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="word" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="language" type="UUID">
+                <constraints nullable="false" foreignKeyName="fk_language_UUID" references="languages(UUID)"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+</databaseChangeLog>
