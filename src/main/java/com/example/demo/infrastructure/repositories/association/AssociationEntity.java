@@ -13,12 +13,10 @@ import java.util.UUID;
 @Table(name="association")
 public class AssociationEntity {
     @Id
-    UUID uuid;
-    @ManyToOne
-    @JoinColumn(name="first_word",referencedColumnName = "uuid")
-    WordEntity firstWord;
-    @ManyToOne
-    @JoinColumn(name="second_word",referencedColumnName = "uuid")
-    WordEntity secondWord;
+    UUID id;
+    @Column(name = "firstWord")
+    UUID firstWordId;
+    @Column(name = "secondWord")
+    UUID secondWordId;
 
 }

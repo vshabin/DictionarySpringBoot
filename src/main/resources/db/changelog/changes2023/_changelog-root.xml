@@ -7,5 +7,8 @@
     <include file="db/changelog/changes2023/20231124-languages-table.xml"/>
     <include file="db/changelog/changes2023/20231124-words-table.xml"/>
     <include file="db/changelog/changes2023/20231124-association-table.xml"/>
+    <include file="db/changelog/changes2023/20231130-languages-table.xml"/>
+    <include file="db/changelog/changes2023/20231130-words-table.xml"/>
+    <include file="db/changelog/changes2023/20231130-association-table.xml"/>
 
 </databaseChangeLog>

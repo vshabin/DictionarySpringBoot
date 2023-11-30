@@ -7,24 +7,18 @@ import lombok.Setter;
 import javax.persistence.*;
 import java.util.UUID;
 
+@Getter
 @Entity
-@Table(name="languages")
+@Setter
+@Table(name="words")
 public class WordEntity {
     @Id
-    @Getter
-    @Setter
-    UUID uuid;
+    UUID id;
 
-    @Column(name="name")
-    @Getter
-    @Setter
-    String Name;
+    @Column(name="word")
+    String word;
 
-    //@Column(name="language")
-    @Setter
-    @Getter
-    @ManyToOne
-    @JoinColumn(name="language",referencedColumnName = "uuid")
-    LanguageEntity language;
+    @Column(name="language")
+    UUID languageId;
 
 }

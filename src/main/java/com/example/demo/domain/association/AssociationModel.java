@@ -1,6 +1,6 @@
-package com.example.demo.domain;
+package com.example.demo.domain.association;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.example.demo.domain.word.WordModel;
 import lombok.Data;
 
 import java.util.UUID;

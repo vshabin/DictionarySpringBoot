@@ -1,10 +1,10 @@
 package com.example.demo.api;
-import com.example.demo.domain.LanguageModel;
+
+import com.example.demo.domain.common.GeneralResultModel;
+import com.example.demo.domain.language.LanguageContent;
+import com.example.demo.domain.language.LanguageModelPost;
+import com.example.demo.domain.language.LanguageModelReturn;
 import com.example.demo.domainservices.LanguageService;
-import com.example.demo.infrastructure.repositories.DbServer;
-import com.example.demo.infrastructure.repositories.MapStructMapper;
-import com.example.demo.infrastructure.repositories.language.LanguageEntity;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import javax.inject.Inject;
@@ -17,18 +17,29 @@ public class LanguageController {
     @Inject
     private LanguageService service;
 
-    @GetMapping(value = "/all")
-    public List<LanguageModel> getAllLanguages(){
-        return service.getAllLanguages();
-    }
-
-    @GetMapping(value="/byName")
-    public LanguageModel getLanguageByName(@RequestParam String name){
-        return service.getLanguageByName(name);
-    }
-
-    @PostMapping
-    public UUID addLanguage(@RequestBody LanguageModel languageModel){
+    @PutMapping(value = "/add")
+    public GeneralResultModel addLanguage(@RequestBody LanguageModelPost languageModel) {
         return service.save(languageModel);
     }
+
+    //    @GetMapping(value = "/all")
+//    public List<LanguageModelReturn> getAllLanguages(){
+//        return service.getAll();
+//    }
+    @GetMapping(value = "/searchById/{id}")
+    public LanguageModelReturn getLanguageById(@PathVariable UUID id) {
+        return service.getById(id);
+    }
+
+    @GetMapping(value = "/searchByName/{name}")
+    public LanguageModelReturn getLanguageByName(@PathVariable String name) {
+        return service.getByName(name);
+    }
+
+    @GetMapping(value = "/getContent/{id}")
+    public LanguageContent getContent(@PathVariable UUID id) {
+        return service.getContent(id);
+    }
+
+
 }

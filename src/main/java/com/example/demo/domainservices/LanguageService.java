@@ -1,11 +1,10 @@
 package com.example.demo.domainservices;
 
-import com.example.demo.domain.LanguageModel;
-import com.example.demo.infrastructure.repositories.DbServer;
-import com.example.demo.infrastructure.repositories.MapStructMapper;
-import com.example.demo.infrastructure.repositories.language.LanguageEntity;
+import com.example.demo.domain.common.GeneralResultModel;
+import com.example.demo.domain.language.LanguageContent;
+import com.example.demo.domain.language.LanguageModelPost;
+import com.example.demo.domain.language.LanguageModelReturn;
 import com.example.demo.infrastructure.repositories.language.LanguageRepository;
-import io.ebean.annotation.Transactional;
 import org.springframework.stereotype.Service;
 
 import javax.inject.Inject;
@@ -16,19 +15,30 @@ import java.util.UUID;
 public class LanguageService {
 
     @Inject
-    LanguageRepository langRepo;
+    private LanguageRepository langRepo;
+    @Inject
+    private WordService wordService;
 
-    public List<LanguageModel> getAllLanguages() {
+    public List<LanguageModelReturn> getAll() {
         return langRepo.findAll();
-
     }
-
-    public LanguageModel getLanguageByName(String name){
+    public LanguageModelReturn getByName(String name){
         return langRepo.findByName(name);
     }
-
-    @Transactional
-    public UUID save(LanguageModel model) {
+    public LanguageModelReturn getById(UUID id) {
+        return langRepo.findById(id);
+    }
+    public LanguageContent getContent(UUID id){
+        LanguageContent languageContent= new LanguageContent();
+        LanguageModelReturn languageModelReturn= langRepo.findById(id);
+        languageContent.setId(languageModelReturn.getId());
+        languageContent.setName(languageModelReturn.getName());
+        languageContent.setWords(wordService.getAllWordByDictionaryId(id));
+        return languageContent;
+    }
+    public GeneralResultModel save(LanguageModelPost model) {
         return langRepo.save(model);
     }
+
+
 }

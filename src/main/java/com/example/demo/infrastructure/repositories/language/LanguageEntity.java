@@ -12,7 +12,7 @@ import java.util.UUID;
 @Data
 public class LanguageEntity {
     @Id
-    private UUID uuid;
+    private UUID id;
 
     @Column(name="name")
     private String Name;
