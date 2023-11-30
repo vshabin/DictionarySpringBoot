@@ -7,6 +7,7 @@ import com.example.demo.domainservices.LanguageService;
 import org.springframework.web.bind.annotation.*;
 
 import javax.inject.Inject;
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -36,5 +37,10 @@ public class LanguageController {
     @DeleteMapping(value = "/delete/{id}")
     public GeneralResultModel delete(@PathVariable UUID id){
         return service.delete(id);
+    }
+
+    @PutMapping(value="/addList")
+    public List<GeneralResultModel> addList(@RequestBody List<LanguageModelAdd> modelAddList){
+        return service.saveList(modelAddList);
     }
 }

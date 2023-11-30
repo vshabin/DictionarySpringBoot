@@ -18,5 +18,6 @@ public interface LanguageMapper {
     LanguageEntity toLanguageEntity(LanguageModelReturn languageModel);
 
     List<LanguageModelReturn> toListLanguageModelReturn(List<LanguageEntity> languageEntities);
+    List<LanguageEntity> toLanguageEntityList(List<LanguageModelAdd>languageModels);
 
 }
