@@ -2,7 +2,7 @@ package com.example.demo.infrastructure.repositories.language;
 
 import com.example.demo.domain.common.GeneralResultModel;
 import com.example.demo.domain.common.GuidResultModel;
-import com.example.demo.domain.language.LanguageModelPost;
+import com.example.demo.domain.language.LanguageModelAdd;
 import com.example.demo.domain.language.LanguageModelReturn;
 import com.example.demo.infrastructure.repositories.DbServer;
 import com.example.demo.infrastructure.repositories.LanguageMapper;
@@ -45,7 +45,7 @@ public class LanguageRepository {
     }
 
     @Transactional
-    public GeneralResultModel save(LanguageModelPost model) {
+    public GeneralResultModel save(LanguageModelAdd model) {
         GeneralResultModel resultModel;
         LanguageEntity entity = mapStructMapper.toLanguageEntity(model);
         try (var tr = Transaction.current()) {
@@ -59,5 +59,33 @@ public class LanguageRepository {
         return resultModel;
     }
 
-
+    @Transactional
+    public GeneralResultModel update(LanguageModelReturn languageModel) {
+        GeneralResultModel resultModel;
+        LanguageEntity entity = mapStructMapper.toLanguageEntity(languageModel);
+        try (var tr = Transaction.current()) {
+            dbServer.getDB().update(entity);
+            tr.commit();
+        } catch (Exception e) {
+            resultModel=new GeneralResultModel("DATABASE_TRANSACTION_ERROR","Ошибка проведения транзакции: "+ e.getMessage());
+            return resultModel;
+        }
+        resultModel = languageModel;
+        return resultModel;
+    }
+    @Transactional
+    public GeneralResultModel delete(UUID id) {
+        GeneralResultModel resultModel;
+        try{
+            dbServer.getDB().find(LanguageEntity.class)
+                    .where()
+                    .eq("id", id)
+                    .delete();
+        } catch (Exception e) {
+            resultModel=new GeneralResultModel("DATABASE_TRANSACTION_ERROR","Ошибка проведения транзакции: "+ e.getMessage());
+            return resultModel;
+        }
+        resultModel= new GeneralResultModel();
+        return resultModel;
+    }
 }

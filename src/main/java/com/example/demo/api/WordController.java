@@ -22,16 +22,16 @@ public class WordController {
 //    }
 
     @PutMapping(value = "/add")
-    public GeneralResultModel addWord(@RequestBody WordModelPost word) {
+    public GeneralResultModel add(@RequestBody WordModelPost word) {
         return wordService.save(word);
     }
     @GetMapping(value = "/searchByName/{word}")
-    public WordModelReturn getWordByName(@PathVariable String word) {
+    public WordModelReturn getByName(@PathVariable String word) {
         return wordService.getWordByName(word);
     }
 
     @GetMapping(value = "/searchById/{id}")
-    public WordModelReturn getWordById(@PathVariable UUID id) {
+    public WordModelReturn getById(@PathVariable UUID id) {
         return wordService.getWordById(id);
     }
 
