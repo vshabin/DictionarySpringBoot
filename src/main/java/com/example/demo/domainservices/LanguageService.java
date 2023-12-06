@@ -1,6 +1,8 @@
 package com.example.demo.domainservices;
 
 import com.example.demo.domain.common.GeneralResultModel;
+import com.example.demo.domain.language.LanguageCriteriaModel;
+import com.example.demo.domain.common.PageResult;
 import com.example.demo.domain.language.LanguageModelAdd;
 import com.example.demo.domain.language.LanguageModelReturn;
 import com.example.demo.infrastructure.repositories.language.LanguageRepository;
@@ -10,78 +12,82 @@ import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 public class LanguageService {
 
     @Inject
-    private LanguageRepository langRepo;
+    private LanguageRepository repository;
 
-    public LanguageModelReturn getByName(String name) {
-        return langRepo.findByName(name);
+    public GeneralResultModel getByName(String name) {
+        LanguageModelReturn model = repository.findByName(name);
+        if (model == null) {
+            return new GeneralResultModel("INCORRECT_NAME_ERROR", "Нет языка с таким именем");
+        }
+        return model;
     }
 
-    public LanguageModelReturn getById(UUID id) {
-        return langRepo.findById(id);
+    public GeneralResultModel getById(UUID id) {
+        LanguageModelReturn model = repository.findById(id);
+        if (model == null) {
+            return new GeneralResultModel("INCORRECT_ID_ERROR", "Нет языка с таким id");
+        }
+        return model;
+
     }
 
     public GeneralResultModel save(LanguageModelAdd model) {
-        GeneralResultModel resultModel= existCheck(model.getName());
-        if(resultModel!=null){
+        if (getByName(model.getName()) != null) {
+            GeneralResultModel resultModel = new GeneralResultModel();
+            resultModel.setErrorCode("LANGUAGE_ALREADY_EXIST_ERROR");
+            resultModel.setErrorMessage("Такой язык уже существует: " + model.getName());
             return resultModel;
         }
-        return langRepo.save(model);
+        return repository.save(model);
     }
 
-    public GeneralResultModel update(LanguageModelReturn languageModel) {
-        GeneralResultModel resultModel= notExistCheck(languageModel.getId());
-        if(resultModel!=null){
-            return resultModel;
+    public GeneralResultModel update(LanguageModelReturn model) {
+        if (getById(model.getId()) == null) {
+            return getNotExistError(model.getId());
         }
-        return langRepo.update(languageModel);
+        return repository.update(model);
     }
 
     public GeneralResultModel delete(UUID id) {
-        GeneralResultModel resultModel= notExistCheck(id);
-        if(resultModel!=null){
-            return resultModel;
+        if (getById(id) == null) {
+            return getNotExistError(id);
         }
-        return langRepo.delete(id);
+        return repository.delete(id);
     }
 
     public List<GeneralResultModel> saveList(List<LanguageModelAdd> modelAddList) {
-        List<GeneralResultModel> resultModels=new ArrayList<>();
-        for(LanguageModelAdd model: modelAddList){
-            GeneralResultModel resultModel= existCheck(model.getName());
-            if(resultModel!=null){
+        var resultModels = new ArrayList<GeneralResultModel>();
+        var modelsToSave = new ArrayList<LanguageModelAdd>();
+        var names = modelAddList.stream().map(LanguageModelAdd::getName).collect(Collectors.toList());
+        var existList = repository.findExist(names);
+        modelAddList.forEach(model -> {
+            if (existList.contains(model.getName())) {
+                GeneralResultModel resultModel = new GeneralResultModel();
+                resultModel.setErrorCode("LANGUAGE_ALREADY_EXIST_ERROR");
+                resultModel.setErrorMessage("Такой язык уже существует: " + model.getName());
                 resultModels.add(resultModel);
-                modelAddList.remove(resultModel);
+            } else {
+                modelsToSave.add(model);
             }
-        }
-        resultModels.addAll(langRepo.saveList(modelAddList));
+        });
+        resultModels.addAll(repository.saveList(modelsToSave));
         return resultModels;
     }
-    private GeneralResultModel existCheck(String name){
-        GeneralResultModel resultModel;
-        LanguageModelReturn check = getByName(name);
-        if (check != null) {
-            resultModel = new GeneralResultModel();
-            resultModel.setErrorCode("LANGUAGE_ALREADY_EXIST_ERROR");
-            resultModel.setErrorMessage("Такой язык уже существует: " + (check.getId()));
-            return resultModel;
-        }
-        return null;
+
+    private GeneralResultModel getNotExistError(UUID id) {
+        GeneralResultModel resultModel = new GeneralResultModel();
+        resultModel.setErrorCode("LANGUAGE_ID_NOT_EXIST_ERROR");
+        resultModel.setErrorMessage("Языка с таким id не существует: " + id);
+        return resultModel;
     }
 
-    private GeneralResultModel notExistCheck(UUID id){
-        GeneralResultModel resultModel;
-        LanguageModelReturn check = getById(id);
-        if (check == null) {
-            resultModel = new GeneralResultModel();
-            resultModel.setErrorCode("LANGUAGE_ID_NOT_EXIST_ERROR");
-            resultModel.setErrorMessage("Языка с таким id не существует: " + id);
-            return resultModel;
-        }
-        return null;
+    public PageResult<LanguageModelReturn> criteriaQuery(LanguageCriteriaModel languageCriteriaModel) {
+        return repository.criteriaQuery(languageCriteriaModel);
     }
 }

@@ -7,9 +7,8 @@ import lombok.NoArgsConstructor;
 import java.util.List;
 
 @Data
-public class PageResult<T> extends GeneralResultModel{
+@AllArgsConstructor
+public class PageResult<T> extends GeneralResultModel {
     private List<T> pageContent;
     private Integer totalCount;
-    //PageModel
-    //WordCriteriaModel
 }

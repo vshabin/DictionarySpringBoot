@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+            http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+
+    <changeSet id="20231204-association-table.xml" author="Vitalik">
+        <renameColumn tableName="association" oldColumnName="first_word" newColumnName="word"/>
+        <renameColumn tableName="association" oldColumnName="second_word" newColumnName="translation"/>
+    </changeSet>
+
+</databaseChangeLog>

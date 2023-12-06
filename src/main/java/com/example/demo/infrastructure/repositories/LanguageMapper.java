@@ -11,13 +11,15 @@ import java.util.List;
         componentModel = "spring"
 )
 public interface LanguageMapper {
+
     LanguageModelReturn toLanguageModelReturn(LanguageEntity languageEntity);
 
     LanguageEntity toLanguageEntity(LanguageModelAdd languageModel);
 
     LanguageEntity toLanguageEntity(LanguageModelReturn languageModel);
 
-    List<LanguageModelReturn> toListLanguageModelReturn(List<LanguageEntity> languageEntities);
-    List<LanguageEntity> toLanguageEntityList(List<LanguageModelAdd>languageModels);
+    List<LanguageModelReturn> toLanguageModelReturnList(List<LanguageEntity> languageEntities);
+
+    List<LanguageEntity> toLanguageEntityList(List<LanguageModelAdd> languageModels);
 
 }
