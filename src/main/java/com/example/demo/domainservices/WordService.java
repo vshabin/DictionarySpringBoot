@@ -50,7 +50,7 @@ public class WordService {
             return new GuidResultModel(UNEXPECTED_LANGUAGE_ID_ERROR_CODE, UNEXPECTED_LANGUAGE_ID_ERROR_MESSAGE + model.getLanguageId());
         }
         WordModelReturn word = repository.getByName(model.getWord());
-        if (word != null && word.getLanguageId() == model.getLanguageId()) {
+        if (word != null && word.getLanguageId().equals(model.getLanguageId())) {
             return new GuidResultModel(WORD_ALREADY_EXIST_ERROR_CODE, WORD_ALREADY_EXIST_ERROR_MESSAGE + (word.getId()));
         }
         return repository.save(model);
@@ -74,9 +74,7 @@ public class WordService {
     }
 
     public List<WordModelReturn> saveList(List<WordModelPost> modelAddList) {
-        modelAddList.forEach(model -> {
-            model.setWord(model.getWord().toLowerCase().trim());
-        });
+        modelAddList.forEach(model -> model.setWord(model.getWord().toLowerCase().trim()));
         var resultModels = new ArrayList<WordModelReturn>();
         var modelsToSave = new ArrayList<WordModelPost>();
         var existList = repository.findExist(modelAddList.stream().map(WordModelPost::getWord).collect(Collectors.toList()));
@@ -91,18 +89,14 @@ public class WordService {
             }
         });
         var savedWords = repository.saveList(modelsToSave);
-        savedWords.forEach(model -> {
-            model.setWord(StringUtils.capitalize(model.getWord()));
-        });
+        savedWords.forEach(model -> model.setWord(StringUtils.capitalize(model.getWord())));
         resultModels.addAll(savedWords);
         return resultModels;
     }
 
     public PageResult<WordModelReturn> criteriaQuery(WordCriteriaModel criteriaModel) {
         PageResult<WordModelReturn> pageResult = repository.criteriaQuery(criteriaModel);
-        pageResult.getPageContent().forEach(model -> {
-            model.setWord(StringUtils.capitalize(model.getWord()));
-        });
+        pageResult.getPageContent().forEach(model -> model.setWord(StringUtils.capitalize(model.getWord())));
         return pageResult;
     }
 
