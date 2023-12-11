@@ -6,8 +6,10 @@ import com.example.demo.domain.common.PageResult;
 import com.example.demo.domain.word.WordCriteriaModel;
 import com.example.demo.domain.word.WordModelPost;
 import com.example.demo.domain.word.WordModelReturn;
+import com.example.demo.domain.word.WordModelReturnEnriched;
 import com.example.demo.infrastructure.repositories.DbServer;
 import com.example.demo.infrastructure.repositories.WordMapper;
+import com.example.demo.infrastructure.repositories.association.AssociationEntity;
 import com.example.demo.infrastructure.repositories.language.LanguageEntity;
 import io.ebean.ExpressionList;
 import io.ebean.PagedList;
@@ -23,6 +25,8 @@ import java.util.stream.Collectors;
 
 @Repository
 public class WordRepository {
+    private final String DATABASE_TRANSACTION_ERROR_CODE = "DATABASE_TRANSACTION_ERROR";
+    private final String DATABASE_TRANSACTION_ERROR_MESSAGE = "Ошибка проведения транзакции: ";
     @Inject
     private DbServer dbServer;
     @Inject
@@ -47,31 +51,25 @@ public class WordRepository {
     }
 
     @Transactional
-    public GeneralResultModel save(WordModelPost model) {
-        GeneralResultModel resultModel;
+    public GuidResultModel save(WordModelPost model) {
         WordEntity entity = mapStructMapper.toWordEntity(model);
         try {
             dbServer.getDB().save(entity);
         } catch (Exception e) {
-            resultModel = new GeneralResultModel("DATABASE_TRANSACTION_ERROR", "Ошибка проведения транзакции: " + e.getMessage());
-            return resultModel;
+            return new GuidResultModel(DATABASE_TRANSACTION_ERROR_CODE, DATABASE_TRANSACTION_ERROR_MESSAGE + e.getMessage());
         }
-        resultModel = new GuidResultModel(entity.getId());
-        return resultModel;
+        return new GuidResultModel(entity.getId());
     }
 
     @Transactional
-    public GeneralResultModel update(WordModelReturn model) {
-        GeneralResultModel resultModel;
+    public WordModelReturn update(WordModelReturn model) {
         WordEntity entity = mapStructMapper.toWordEntity(model);
         try {
             dbServer.getDB().update(entity);
         } catch (Exception e) {
-            resultModel = new GeneralResultModel("DATABASE_TRANSACTION_ERROR", "Ошибка проведения транзакции: " + e.getMessage());
-            return resultModel;
+            return new WordModelReturn(DATABASE_TRANSACTION_ERROR_CODE, DATABASE_TRANSACTION_ERROR_MESSAGE + e.getMessage());
         }
-        resultModel = model;
-        return resultModel;
+        return model;
     }
 
     @Transactional
@@ -83,21 +81,20 @@ public class WordRepository {
                     .eq(WordEntity.ID, id)
                     .delete();
         } catch (Exception e) {
-            resultModel = new GeneralResultModel("DATABASE_TRANSACTION_ERROR", "Ошибка проведения транзакции: " + e.getMessage());
+            resultModel = new GeneralResultModel(DATABASE_TRANSACTION_ERROR_CODE, DATABASE_TRANSACTION_ERROR_MESSAGE + e.getMessage());
             return resultModel;
         }
-        resultModel = new GeneralResultModel();
-        return resultModel;
+        return null;
     }
 
     @Transactional
-    public List<GeneralResultModel> saveList(List<WordModelPost> modelAddList) {
-        List<GeneralResultModel> resultModel = new ArrayList<>();
+    public List<WordModelReturn> saveList(List<WordModelPost> modelAddList) {
+        List<WordModelReturn> resultModel = new ArrayList<>();
         List<WordEntity> entities = mapStructMapper.toWordEntityList(modelAddList);
         try {
             dbServer.getDB().saveAll(entities);
         } catch (Exception e) {
-            resultModel.add(new GeneralResultModel("DATABASE_TRANSACTION_ERROR", "Ошибка проведения транзакции: " + e.getMessage()));
+            resultModel.add(new WordModelReturn(DATABASE_TRANSACTION_ERROR_CODE, DATABASE_TRANSACTION_ERROR_MESSAGE + e.getMessage()));
             return resultModel;
         }
         for (WordEntity entity : entities) {
@@ -152,40 +149,36 @@ public class WordRepository {
         return esc + string + esc;
     }
 
-    public GeneralResultModel getByNameEnriched(String word) {
+    public WordModelReturnEnriched getByNameEnriched(String word) {
         WordEntity wordEntity = dbServer.getDB()
                 .find(WordEntity.class)
                 .where()
                 .eq(WordEntity.WORD, word)
                 .findOne();
-        LanguageEntity languageEntity;
+        LanguageEntity languageEntity = null;
         if (wordEntity != null) {
             languageEntity = dbServer.getDB()
                     .find(LanguageEntity.class)
                     .where()
                     .eq(LanguageEntity.ID, wordEntity.getLanguageId())
                     .findOne();
-        } else {
-            return new GeneralResultModel("INCORRECT_NAME_ERROR", "Нет слова с таким именем");
         }
         return mapStructMapper.toWordModelReturnEnriched(wordEntity, languageEntity);
     }
 
-    public GeneralResultModel getByIdEnriched(UUID id) {
+    public WordModelReturnEnriched getByIdEnriched(UUID id) {
         WordEntity wordEntity = dbServer.getDB()
                 .find(WordEntity.class)
                 .where()
                 .eq(WordEntity.ID, id)
                 .findOne();
-        LanguageEntity languageEntity;
+        LanguageEntity languageEntity = null;
         if (wordEntity != null) {
             languageEntity = dbServer.getDB()
                     .find(LanguageEntity.class)
                     .where()
                     .eq(LanguageEntity.ID, wordEntity.getLanguageId())
                     .findOne();
-        } else {
-            return new GeneralResultModel("INCORRECT_ID_ERROR", "Нет слова с таким id");
         }
         return mapStructMapper.toWordModelReturnEnriched(wordEntity, languageEntity);
     }
@@ -204,5 +197,21 @@ public class WordRepository {
                 .eq(WordEntity.ID, secondWord)
                 .findSingleAttribute();
         return firstLang == secondLang;
+    }
+
+    public boolean exists(UUID id) {
+        return dbServer.getDB()
+                .find(WordEntity.class)
+                .where()
+                .eq(WordEntity.ID, id)
+                .exists();
+    }
+
+    public boolean exists(String word) {
+        return dbServer.getDB()
+                .find(WordEntity.class)
+                .where()
+                .eq(WordEntity.WORD, word)
+                .exists();
     }
 }

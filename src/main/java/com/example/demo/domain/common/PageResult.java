@@ -11,4 +11,8 @@ import java.util.List;
 public class PageResult<T> extends GeneralResultModel {
     private List<T> pageContent;
     private Integer totalCount;
+
+    public PageResult(String errorCode, String errorMessage) {
+        super(errorCode, errorMessage);
+    }
 }

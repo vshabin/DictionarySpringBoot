@@ -6,6 +6,7 @@ import com.example.demo.domain.language.LanguageModelAdd;
 import com.example.demo.domain.language.LanguageModelReturn;
 import com.example.demo.infrastructure.repositories.DbServer;
 import com.example.demo.infrastructure.repositories.LanguageMapper;
+import com.example.demo.infrastructure.repositories.word.WordEntity;
 import io.ebean.*;
 import io.ebean.annotation.Transactional;
 import io.micrometer.common.util.StringUtils;
@@ -19,6 +20,9 @@ import java.util.stream.Collectors;
 
 @Repository
 public class LanguageRepository {
+    private final String DATABASE_TRANSACTION_ERROR_CODE = "DATABASE_TRANSACTION_ERROR";
+    private final String DATABASE_TRANSACTION_ERROR_MESSAGE = "Ошибка проведения транзакции: ";
+
     @Inject
     DbServer dbServer;
     @Inject
@@ -43,13 +47,13 @@ public class LanguageRepository {
     }
 
     @Transactional
-    public GeneralResultModel save(LanguageModelAdd model) {
-        GeneralResultModel resultModel;
+    public GuidResultModel save(LanguageModelAdd model) {
+        GuidResultModel resultModel;
         LanguageEntity entity = mapStructMapper.toLanguageEntity(model);
         try {
             dbServer.getDB().save(entity);
         } catch (Exception e) {
-            resultModel = new GeneralResultModel("DATABASE_TRANSACTION_ERROR", "Ошибка проведения транзакции: " + e.getMessage());
+            resultModel = new GuidResultModel(DATABASE_TRANSACTION_ERROR_CODE, DATABASE_TRANSACTION_ERROR_MESSAGE + e.getMessage());
             return resultModel;
         }
         resultModel = new GuidResultModel(entity.getId());
@@ -57,13 +61,18 @@ public class LanguageRepository {
     }
 
     @Transactional
-    public GeneralResultModel update(LanguageModelReturn languageModel) {
-        GeneralResultModel resultModel;
+    public LanguageModelReturn update(LanguageModelReturn languageModel) {
+        LanguageModelReturn resultModel;
         LanguageEntity entity = mapStructMapper.toLanguageEntity(languageModel);
         try {
-            dbServer.getDB().update(entity);
+            dbServer.getDB()
+                    .update(LanguageEntity.class)
+                    .set(LanguageEntity.NAME, entity.getName())
+                    .where()
+                    .eq(LanguageEntity.ID, entity.getId())
+                    .update();
         } catch (Exception e) {
-            resultModel = new GeneralResultModel("DATABASE_TRANSACTION_ERROR", "Ошибка проведения транзакции: " + e.getMessage());
+            resultModel = new LanguageModelReturn(DATABASE_TRANSACTION_ERROR_CODE, DATABASE_TRANSACTION_ERROR_MESSAGE + e.getMessage());
             return resultModel;
         }
         resultModel = languageModel;
@@ -79,21 +88,20 @@ public class LanguageRepository {
                     .eq(LanguageEntity.ID, id)
                     .delete();
         } catch (Exception e) {
-            resultModel = new GeneralResultModel("DATABASE_TRANSACTION_ERROR", "Ошибка проведения транзакции: " + e.getMessage());
+            resultModel = new GeneralResultModel(DATABASE_TRANSACTION_ERROR_CODE, DATABASE_TRANSACTION_ERROR_MESSAGE + e.getMessage());
             return resultModel;
         }
-        resultModel = new GeneralResultModel();
-        return resultModel;
+        return null;
     }
 
     @Transactional
-    public List<GeneralResultModel> saveList(List<LanguageModelAdd> modelAddList) {
-        List<GeneralResultModel> resultModel = new ArrayList<>();
+    public List<LanguageModelReturn> saveList(List<LanguageModelAdd> modelAddList) {
+        List<LanguageModelReturn> resultModel = new ArrayList<>();
         List<LanguageEntity> entities = mapStructMapper.toLanguageEntityList(modelAddList);
         try {
             dbServer.getDB().saveAll(entities);
         } catch (Exception e) {
-            resultModel.add(new GeneralResultModel("DATABASE_TRANSACTION_ERROR", "Ошибка проведения транзакции: " + e.getMessage()));
+            resultModel.add(new LanguageModelReturn(DATABASE_TRANSACTION_ERROR_CODE, DATABASE_TRANSACTION_ERROR_MESSAGE + e.getMessage()));
             return resultModel;
         }
         for (LanguageEntity entity : entities) {
@@ -139,5 +147,29 @@ public class LanguageRepository {
 
     private String escape(String string, char esc) {
         return esc + string + esc;
+    }
+
+    public List<UUID> findExistById(List<UUID> languageIds) {
+        return mapStructMapper.toLanguageModelReturnList(dbServer.getDB()
+                .find(LanguageEntity.class)
+                .where()
+                .in(LanguageEntity.ID, languageIds)
+                .findList()).stream().map(LanguageModelReturn::getId).collect(Collectors.toList());
+    }
+
+    public boolean exists(UUID id) {
+        return dbServer.getDB()
+                .find(LanguageEntity.class)
+                .where()
+                .eq(LanguageEntity.ID, id)
+                .exists();
+    }
+
+    public boolean exists(String name) {
+        return dbServer.getDB()
+                .find(LanguageEntity.class)
+                .where()
+                .eq(LanguageEntity.NAME, name)
+                .exists();
     }
 }

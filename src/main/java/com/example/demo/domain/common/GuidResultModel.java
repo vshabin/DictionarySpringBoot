@@ -11,4 +11,8 @@ import java.util.UUID;
 @NoArgsConstructor
 public class GuidResultModel extends GeneralResultModel {
     private UUID id;
+
+    public GuidResultModel(String errorCode, String errorMessage) {
+        super(errorCode, errorMessage);
+    }
 }

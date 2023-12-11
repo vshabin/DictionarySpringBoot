@@ -1,12 +1,15 @@
 package com.example.demo.domainservices;
 
 import com.example.demo.domain.common.GeneralResultModel;
+import com.example.demo.domain.common.GuidResultModel;
 import com.example.demo.domain.common.PageResult;
 import com.example.demo.domain.word.WordCriteriaModel;
 import com.example.demo.domain.word.WordModelPost;
 import com.example.demo.domain.word.WordModelReturn;
+import com.example.demo.domain.word.WordModelReturnEnriched;
 import com.example.demo.infrastructure.repositories.word.WordRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
@@ -16,100 +19,117 @@ import java.util.stream.Collectors;
 
 @Service
 public class WordService {
+    private static final String UNEXPECTED_LANGUAGE_ID_ERROR_CODE = "UNEXPECTED_LANGUAGE_ID";
+    private static final String UNEXPECTED_LANGUAGE_ID_ERROR_MESSAGE = "Неверный id языка: ";
+    private static final String WORD_ALREADY_EXIST_ERROR_CODE = "WORD_ALREADY_EXIST_ERROR";
+    private static final String WORD_ALREADY_EXIST_ERROR_MESSAGE = "Такое слово уже существует в словаре: ";
+    private static final String WORD_ID_NOT_EXIST_ERROR_CODE = "WORD_ID_NOT_EXIST_ERROR";
+    private static final String WORD_ID_NOT_EXIST_ERROR_MESSAGE = "Слово с таким id не существует: ";
 
     @Inject
     private WordRepository repository;
     @Inject
     private LanguageService languageService;
 
-    // model.setLanguageName(languageService.getById(model.getLanguageId()).getName());
-    public GeneralResultModel getByName(String word) {
+    public WordModelReturn getByName(String word) {
+        word = word.toLowerCase().trim();
         WordModelReturn model = repository.getByName(word);
-        if (model == null) {
-            return new GeneralResultModel("INCORRECT_NAME_ERROR", "Нет слова с таким именем");
-        }
+        model.setWord(StringUtils.capitalize(model.getWord()));
         return model;
     }
 
-    public GeneralResultModel getById(UUID id) {
+    public WordModelReturn getById(UUID id) {
         WordModelReturn model = repository.getById(id);
-        if (model == null) {
-            return new GeneralResultModel("INCORRECT_ID_ERROR", "Нет слова с таким id");
-        }
+        model.setWord(StringUtils.capitalize(model.getWord()));
         return model;
     }
 
-    public GeneralResultModel save(WordModelPost model) {
-        GeneralResultModel resultModel;
+    public GuidResultModel save(WordModelPost model) {
+        model.setWord(model.getWord().toLowerCase().trim());
         if (languageService.getById(model.getLanguageId()) == null) {
-            resultModel = new GeneralResultModel();
-            resultModel.setErrorCode("UNEXPECTED_LANGUAGE_ID_ERROR");
-            resultModel.setErrorMessage("Неверный id языка: " + model.getLanguageId());
-            return resultModel;
+            return new GuidResultModel(UNEXPECTED_LANGUAGE_ID_ERROR_CODE, UNEXPECTED_LANGUAGE_ID_ERROR_MESSAGE + model.getLanguageId());
         }
         WordModelReturn word = repository.getByName(model.getWord());
         if (word != null && word.getLanguageId() == model.getLanguageId()) {
-            resultModel = new GeneralResultModel();
-            resultModel.setErrorCode("WORD_ALREADY_EXIST_ERROR");
-            resultModel.setErrorMessage("Такое слово уже есть в словаре: " + (word.getId()));
-            return resultModel;
+            return new GuidResultModel(WORD_ALREADY_EXIST_ERROR_CODE, WORD_ALREADY_EXIST_ERROR_MESSAGE + (word.getId()));
         }
         return repository.save(model);
     }
 
-    public GeneralResultModel update(WordModelReturn model) {
+    public WordModelReturn update(WordModelReturn model) {
         if (getById(model.getId()) == null) {
-            return getNotExistError(model.getId());
+            return new WordModelReturn(WORD_ID_NOT_EXIST_ERROR_CODE, WORD_ID_NOT_EXIST_ERROR_MESSAGE + model.getId());
         }
-        return repository.update(model);
+        model.setWord(model.getWord().toLowerCase().trim());
+        WordModelReturn wordModelReturn = repository.update(model);
+        wordModelReturn.setWord(StringUtils.capitalize(wordModelReturn.getWord()));
+        return wordModelReturn;
     }
 
     public GeneralResultModel delete(UUID id) {
-        if (getById(id) == null) {
-            return getNotExistError(id);
+        if (repository.getById(id) == null) {
+            return new GeneralResultModel(WORD_ID_NOT_EXIST_ERROR_CODE, WORD_ID_NOT_EXIST_ERROR_MESSAGE + id);
         }
         return repository.delete(id);
     }
 
-    public List<GeneralResultModel> saveList(List<WordModelPost> modelAddList) {
-        var resultModels = new ArrayList<GeneralResultModel>();
+    public List<WordModelReturn> saveList(List<WordModelPost> modelAddList) {
+        modelAddList.forEach(model -> {
+            model.setWord(model.getWord().toLowerCase().trim());
+        });
+        var resultModels = new ArrayList<WordModelReturn>();
         var modelsToSave = new ArrayList<WordModelPost>();
-        var names = modelAddList.stream().map(WordModelPost::getWord).collect(Collectors.toList());
-        var existList = repository.findExist(names);
+        var existList = repository.findExist(modelAddList.stream().map(WordModelPost::getWord).collect(Collectors.toList()));
+        var existLanguageList = languageService.findExist(modelAddList.stream().map(WordModelPost::getLanguageId).collect(Collectors.toList()));
         modelAddList.forEach(model -> {
             if (existList.contains(model.getWord())) {
-                GeneralResultModel resultModel = new GeneralResultModel();
-                resultModel.setErrorCode("WORD_ALREADY_EXIST_ERROR");
-                resultModel.setErrorMessage("Такое слово уже существует: " + model.getWord());
-                resultModels.add(resultModel);
+                resultModels.add(new WordModelReturn(WORD_ALREADY_EXIST_ERROR_CODE, WORD_ALREADY_EXIST_ERROR_MESSAGE + StringUtils.capitalize(model.getWord())));
+            } else if (!existLanguageList.contains(model.getLanguageId())) {
+                resultModels.add(new WordModelReturn(UNEXPECTED_LANGUAGE_ID_ERROR_CODE, UNEXPECTED_LANGUAGE_ID_ERROR_MESSAGE + model.getLanguageId()));
             } else {
                 modelsToSave.add(model);
             }
         });
-        resultModels.addAll(repository.saveList(modelsToSave));
+        var savedWords = repository.saveList(modelsToSave);
+        savedWords.forEach(model -> {
+            model.setWord(StringUtils.capitalize(model.getWord()));
+        });
+        resultModels.addAll(savedWords);
         return resultModels;
     }
 
-    private GeneralResultModel getNotExistError(UUID id) {
-        GeneralResultModel resultModel = new GeneralResultModel();
-        resultModel.setErrorCode("WORD_ID_NOT_EXIST_ERROR");
-        resultModel.setErrorMessage("Слова с таким id не существует: " + id);
-        return resultModel;
-    }
-
     public PageResult<WordModelReturn> criteriaQuery(WordCriteriaModel criteriaModel) {
-        return repository.criteriaQuery(criteriaModel);
+        PageResult<WordModelReturn> pageResult = repository.criteriaQuery(criteriaModel);
+        pageResult.getPageContent().forEach(model -> {
+            model.setWord(StringUtils.capitalize(model.getWord()));
+        });
+        return pageResult;
     }
 
-    public GeneralResultModel getByNameEnriched(String word) {
-        return repository.getByNameEnriched(word);
+    public WordModelReturnEnriched getByNameEnriched(String word) {
+        word = word.toLowerCase().trim();
+        var result = repository.getByNameEnriched(word);
+        result.setWord(StringUtils.capitalize(result.getWord()));
+        result.setLanguageName(StringUtils.capitalize(result.getLanguageName()));
+        return result;
     }
 
-    public GeneralResultModel getByIdEnriched(UUID id) {
-        return repository.getByIdEnriched(id);
+    public WordModelReturnEnriched getByIdEnriched(UUID id) {
+        var result = repository.getByIdEnriched(id);
+        result.setWord(StringUtils.capitalize(result.getWord()));
+        result.setLanguageName(StringUtils.capitalize(result.getLanguageName()));
+        return result;
     }
 
     public boolean isSameLanguage(UUID firstWord, UUID secondWord) {
         return repository.isSameLanguage(firstWord, secondWord);
+    }
+
+    public boolean exists(UUID id) {
+        return repository.exists(id);
+    }
+
+    public boolean exists(String word) {
+        return repository.exists(word);
     }
 }

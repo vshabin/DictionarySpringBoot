@@ -1,11 +1,13 @@
 package com.example.demo.domainservices;
 
 import com.example.demo.domain.common.GeneralResultModel;
+import com.example.demo.domain.common.GuidResultModel;
 import com.example.demo.domain.language.LanguageCriteriaModel;
 import com.example.demo.domain.common.PageResult;
 import com.example.demo.domain.language.LanguageModelAdd;
 import com.example.demo.domain.language.LanguageModelReturn;
 import com.example.demo.infrastructure.repositories.language.LanguageRepository;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
 import javax.inject.Inject;
@@ -16,78 +18,99 @@ import java.util.stream.Collectors;
 
 @Service
 public class LanguageService {
+    private static final String LANGUAGE_ALREADY_EXIST_ERROR_CODE = "LANGUAGE_ALREADY_EXIST";
+    private static final String LANGUAGE_ALREADY_EXIST_ERROR_MESSAGE = "Такой язык уже существует: ";
+    private static final String LANGUAGE_NOT_EXIST_ERROR_CODE = "LANGUAGE_NOT_EXIST";
+    private static final String LANGUAGE_NOT_EXIST_ERROR_MESSAGE = "Такой язык не существует: ";
+    private static final String LANGUAGE_ID_NOT_EXIST_ERROR_CODE = "LANGUAGE_ID_NOT_EXIST";
+    private static final String LANGUAGE_ID_NOT_EXIST_ERROR_MESSAGE = "Языка с таким id не существует: ";
 
     @Inject
     private LanguageRepository repository;
 
-    public GeneralResultModel getByName(String name) {
+    public LanguageModelReturn getByName(String name) {
+        name = name.toLowerCase().trim();
         LanguageModelReturn model = repository.findByName(name);
-        if (model == null) {
-            return new GeneralResultModel("INCORRECT_NAME_ERROR", "Нет языка с таким именем");
+        if (model != null) {
+            model.setName(StringUtils.capitalize(model.getName()));
         }
         return model;
     }
 
-    public GeneralResultModel getById(UUID id) {
+    public LanguageModelReturn getById(UUID id) {
         LanguageModelReturn model = repository.findById(id);
-        if (model == null) {
-            return new GeneralResultModel("INCORRECT_ID_ERROR", "Нет языка с таким id");
+        if (model != null) {
+            model.setName(StringUtils.capitalize(model.getName()));
         }
         return model;
-
     }
 
-    public GeneralResultModel save(LanguageModelAdd model) {
-        if (getByName(model.getName()) != null) {
-            GeneralResultModel resultModel = new GeneralResultModel();
-            resultModel.setErrorCode("LANGUAGE_ALREADY_EXIST_ERROR");
-            resultModel.setErrorMessage("Такой язык уже существует: " + model.getName());
-            return resultModel;
+    public GuidResultModel save(LanguageModelAdd model) {
+        model.setName(model.getName().toLowerCase().trim());
+        LanguageModelReturn existModel = getByName(model.getName());
+        if (existModel != null) {
+            return new GuidResultModel(LANGUAGE_ALREADY_EXIST_ERROR_CODE, LANGUAGE_ALREADY_EXIST_ERROR_MESSAGE + StringUtils.capitalize(model.getName()));
         }
-        return repository.save(model);
+        GuidResultModel answer = repository.save(model);
+        return answer;
     }
 
-    public GeneralResultModel update(LanguageModelReturn model) {
+    public LanguageModelReturn update(LanguageModelReturn model) {
+        model.setName(model.getName().toLowerCase().trim());
         if (getById(model.getId()) == null) {
-            return getNotExistError(model.getId());
+            return new LanguageModelReturn(LANGUAGE_ID_NOT_EXIST_ERROR_CODE, LANGUAGE_ID_NOT_EXIST_ERROR_MESSAGE + model.getId());
         }
-        return repository.update(model);
+        LanguageModelReturn languageModelReturn = repository.update(model);
+        languageModelReturn.setName(StringUtils.capitalize(languageModelReturn.getName()));
+        return languageModelReturn;
     }
 
     public GeneralResultModel delete(UUID id) {
         if (getById(id) == null) {
-            return getNotExistError(id);
+            return new GeneralResultModel(LANGUAGE_ID_NOT_EXIST_ERROR_CODE, LANGUAGE_ID_NOT_EXIST_ERROR_MESSAGE + id);
         }
         return repository.delete(id);
     }
 
-    public List<GeneralResultModel> saveList(List<LanguageModelAdd> modelAddList) {
-        var resultModels = new ArrayList<GeneralResultModel>();
+    public List<LanguageModelReturn> saveList(List<LanguageModelAdd> modelAddList) {
+        modelAddList.forEach(languageModelAdd -> {
+            languageModelAdd.setName(languageModelAdd.getName().toLowerCase().trim());
+        });
+        var resultModels = new ArrayList<LanguageModelReturn>();
         var modelsToSave = new ArrayList<LanguageModelAdd>();
-        var names = modelAddList.stream().map(LanguageModelAdd::getName).collect(Collectors.toList());
-        var existList = repository.findExist(names);
+        var existList = repository.findExist(modelAddList.stream().map(LanguageModelAdd::getName).collect(Collectors.toList()));
         modelAddList.forEach(model -> {
             if (existList.contains(model.getName())) {
-                GeneralResultModel resultModel = new GeneralResultModel();
-                resultModel.setErrorCode("LANGUAGE_ALREADY_EXIST_ERROR");
-                resultModel.setErrorMessage("Такой язык уже существует: " + model.getName());
-                resultModels.add(resultModel);
+                resultModels.add(new LanguageModelReturn(LANGUAGE_ALREADY_EXIST_ERROR_CODE, LANGUAGE_ALREADY_EXIST_ERROR_MESSAGE + StringUtils.capitalize(model.getName())));
             } else {
                 modelsToSave.add(model);
             }
         });
-        resultModels.addAll(repository.saveList(modelsToSave));
+        List<LanguageModelReturn> successResultModels = repository.saveList(modelsToSave);
+        successResultModels.forEach(model -> {
+            model.setName(StringUtils.capitalize(model.getName()));
+        });
+        resultModels.addAll(successResultModels);
         return resultModels;
     }
 
-    private GeneralResultModel getNotExistError(UUID id) {
-        GeneralResultModel resultModel = new GeneralResultModel();
-        resultModel.setErrorCode("LANGUAGE_ID_NOT_EXIST_ERROR");
-        resultModel.setErrorMessage("Языка с таким id не существует: " + id);
-        return resultModel;
+    public PageResult<LanguageModelReturn> criteriaQuery(LanguageCriteriaModel languageCriteriaModel) {
+        PageResult<LanguageModelReturn> pageResult = repository.criteriaQuery(languageCriteriaModel);
+        pageResult.getPageContent().forEach(model -> {
+            model.setName(StringUtils.capitalize(model.getName()));
+        });
+        return pageResult;
     }
 
-    public PageResult<LanguageModelReturn> criteriaQuery(LanguageCriteriaModel languageCriteriaModel) {
-        return repository.criteriaQuery(languageCriteriaModel);
+    public List<UUID> findExist(List<UUID> languageIds) {
+        return repository.findExistById(languageIds);
+    }
+
+    public boolean exists(UUID id) {
+        return repository.exists(id);
+    }
+
+    public boolean exists(String name) {
+        return repository.exists(name);
     }
 }

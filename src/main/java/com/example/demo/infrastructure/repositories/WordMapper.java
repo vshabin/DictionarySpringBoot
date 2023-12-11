@@ -30,5 +30,6 @@ public interface WordMapper {
 
     @Mapping(source = "languageEntity.name", target = "languageName")
     @Mapping(source = "wordEntity.id", target = "id")
+    @Mapping(source = "wordEntity.createdAt", target = "createdAt")
     WordModelReturnEnriched toWordModelReturnEnriched(WordEntity wordEntity, LanguageEntity languageEntity);
 }

@@ -1,14 +1,14 @@
 package com.example.demo.infrastructure.repositories.association;
 
-import com.example.demo.domain.association.AssociationCriteriaModel;
-import com.example.demo.domain.association.AssociationModelAdd;
-import com.example.demo.domain.association.AssociationModelReturn;
+import com.example.demo.domain.association.*;
 import com.example.demo.domain.common.GeneralResultModel;
 import com.example.demo.domain.common.GuidResultModel;
 import com.example.demo.domain.common.PageResult;
+import com.example.demo.domain.word.WordModelReturn;
 import com.example.demo.infrastructure.repositories.AssociationMapper;
 
 import com.example.demo.infrastructure.repositories.DbServer;
+import com.example.demo.infrastructure.repositories.WordMapper;
 import com.example.demo.infrastructure.repositories.language.LanguageEntity;
 import com.example.demo.infrastructure.repositories.word.WordEntity;
 import io.ebean.ExpressionList;
@@ -24,8 +24,13 @@ import java.util.UUID;
 
 @Repository
 public class AssociationRepository {
+    private final String DATABASE_TRANSACTION_ERROR_CODE = "DATABASE_TRANSACTION_ERROR";
+    private final String DATABASE_TRANSACTION_ERROR_MESSAGE = "Ошибка проведения транзакции: ";
+
     @Inject
     private AssociationMapper mapStructMapper;
+    @Inject
+    private WordMapper wordMapper;
     @Inject
     private DbServer dbServer;
 
@@ -39,13 +44,13 @@ public class AssociationRepository {
     }
 
     @Transactional
-    public GeneralResultModel save(AssociationModelAdd model) {
-        GeneralResultModel resultModel;
+    public GuidResultModel save(AssociationModelAdd model) {
+        GuidResultModel resultModel;
         AssociationEntity entity = mapStructMapper.toAssociationEntity(model);
         try {
             dbServer.getDB().save(entity);
         } catch (Exception e) {
-            resultModel = new GeneralResultModel("DATABASE_TRANSACTION_ERROR", "Ошибка проведения транзакции: " + e.getMessage());
+            resultModel = new GuidResultModel(DATABASE_TRANSACTION_ERROR_CODE, DATABASE_TRANSACTION_ERROR_MESSAGE + e.getMessage());
             return resultModel;
         }
         resultModel = new GuidResultModel(entity.getId());
@@ -53,13 +58,13 @@ public class AssociationRepository {
     }
 
     @Transactional
-    public GeneralResultModel update(AssociationModelReturn model) {
-        GeneralResultModel resultModel;
+    public AssociationModelReturn update(AssociationModelReturn model) {
+        AssociationModelReturn resultModel;
         AssociationEntity entity = mapStructMapper.toAssociationEntity(model);
         try {
             dbServer.getDB().update(entity);
         } catch (Exception e) {
-            resultModel = new GeneralResultModel("DATABASE_TRANSACTION_ERROR", "Ошибка проведения транзакции: " + e.getMessage());
+            resultModel = new AssociationModelReturn(DATABASE_TRANSACTION_ERROR_CODE, DATABASE_TRANSACTION_ERROR_MESSAGE + e.getMessage());
             return resultModel;
         }
         resultModel = model;
@@ -75,7 +80,7 @@ public class AssociationRepository {
                     .eq(AssociationEntity.ID, id)
                     .delete();
         } catch (Exception e) {
-            resultModel = new GeneralResultModel("DATABASE_TRANSACTION_ERROR", "Ошибка проведения транзакции: " + e.getMessage());
+            resultModel = new GeneralResultModel(DATABASE_TRANSACTION_ERROR_CODE, DATABASE_TRANSACTION_ERROR_MESSAGE + e.getMessage());
             return resultModel;
         }
         resultModel = new GeneralResultModel();
@@ -83,13 +88,13 @@ public class AssociationRepository {
     }
 
     @Transactional
-    public List<GeneralResultModel> saveList(List<AssociationModelAdd> modelAddList) {
-        List<GeneralResultModel> resultModel = new ArrayList<>();
+    public List<AssociationModelReturn> saveList(List<AssociationModelAdd> modelAddList) {
+        List<AssociationModelReturn> resultModel = new ArrayList<>();
         List<AssociationEntity> entities = mapStructMapper.toAssociationEntityList(modelAddList);
         try {
             dbServer.getDB().saveAll(entities);
         } catch (Exception e) {
-            resultModel.add(new GeneralResultModel("DATABASE_TRANSACTION_ERROR", "Ошибка проведения транзакции: " + e.getMessage()));
+            resultModel.add(new AssociationModelReturn(DATABASE_TRANSACTION_ERROR_CODE, DATABASE_TRANSACTION_ERROR_MESSAGE + e.getMessage()));
             return resultModel;
         }
         for (AssociationEntity entity : entities) {
@@ -230,14 +235,14 @@ public class AssociationRepository {
                 .findSingleAttributeList();
     }
 
-    public GeneralResultModel getByIdEnriched(UUID id) {
+    public AssociationModelReturnEnriched getByIdEnriched(UUID id) {
         AssociationEntity associationEntity = dbServer.getDB()
                 .find(AssociationEntity.class)
                 .where()
                 .eq(AssociationEntity.ID, id)
                 .findOne();
         if (associationEntity == null) {
-            return new GeneralResultModel("INCORRECT_ID_ERROR", "Нет ассоциации с таким id");
+            return null;
         }
         WordEntity wordEntity = dbServer.getDB()
                 .find(WordEntity.class)
@@ -260,5 +265,40 @@ public class AssociationRepository {
                 .eq(LanguageEntity.ID, translationEntity.getLanguageId())
                 .findOne();
         return mapStructMapper.toAssociationModelReturnEnriched(associationEntity, wordEntity, translationEntity, wordLanguageEntity, translationLanguageEntity);
+    }
+
+    public PageResult<WordModelReturn> translate(TranslationRequest request) {
+        LanguageEntity wordLanguageEntity = dbServer.getDB()
+                .find(LanguageEntity.class)
+                .where()
+                .eq(LanguageEntity.NAME, request.getWordLanguage())
+                .findOne();
+        LanguageEntity translationLanguageEntity = dbServer.getDB()
+                .find(LanguageEntity.class)
+                .where()
+                .eq(LanguageEntity.NAME, request.getTranslationLanguage())
+                .findOne();
+        WordEntity word = dbServer.getDB()
+                .find(WordEntity.class)
+                .where()
+                .eq(WordEntity.WORD, request.getWord())
+                .eq(WordEntity.LANGUAGE, wordLanguageEntity.getId())
+                .findOne();
+        var translations = dbServer.getDB()
+                .find(AssociationEntity.class)
+                .select(AssociationEntity.TRANSLATION)
+                .where()
+                .eq(AssociationEntity.WORD, word.getId())
+                .findSingleAttributeList();
+        PagedList<WordEntity> entityPagedList =
+                dbServer.getDB()
+                        .find(WordEntity.class)
+                        .setFirstRow(request.getSize() * (request.getPageNumber() - 1))
+                        .setMaxRows(request.getSize())
+                        .where()
+                        .in(WordEntity.ID, translations)
+                        .eq(WordEntity.LANGUAGE, translationLanguageEntity.getId())
+                        .findPagedList();
+        return new PageResult<>(wordMapper.toWordModelReturnList(entityPagedList.getList()), entityPagedList.getTotalCount());
     }
 }

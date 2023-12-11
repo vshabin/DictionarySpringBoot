@@ -37,5 +37,6 @@ public interface AssociationMapper {
     @Mapping(source = "translationEntity.languageId", target = "secondWordLangId")
     @Mapping(source = "languageEntity.name", target = "firstWordLangName")
     @Mapping(source = "translationLanguageEntity.name", target = "secondWordLangName")
+    @Mapping(source = "associationEntity.createdAt", target = "createdAt")
     AssociationModelReturnEnriched toAssociationModelReturnEnriched(AssociationEntity associationEntity, WordEntity wordEntity, WordEntity translationEntity, LanguageEntity languageEntity, LanguageEntity translationLanguageEntity);
 }
