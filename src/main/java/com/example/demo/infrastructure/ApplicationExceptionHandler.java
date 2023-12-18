@@ -4,6 +4,7 @@ import com.example.demo.domain.common.GeneralResultModel;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.ConstraintViolationException;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -13,6 +14,7 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 import java.io.IOException;
 
 @ControllerAdvice
+@Qualifier("exceptionHandler")
 public class ApplicationExceptionHandler {
     static final String VALIDATION_ERROR = "VALIDATION_ERROR";
     static final String UNKNOWN_ERROR = "UNKNOWN_ERROR";

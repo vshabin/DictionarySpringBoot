@@ -14,4 +14,9 @@
     <include file="db/changelog/changes2023/20231201-words-table.xml"/>
     <include file="db/changelog/changes2023/20231201-association-table.xml"/>
     <include file="db/changelog/changes2023/20231204-association-table.xml"/>
+    <include file="db/changelog/changes2023/20231214-sessions-table.xml"/>
+    <include file="/db/changelog/changes2023/20231214-users-table.xml"/>
+    <include file="/db/changelog/changes2023/20231215-users-table.xml"/>
+    <include file="/db/changelog/changes2023/20231215-sessions-table.xml"/>
+    <include file="/db/changelog/changes2023/20231218-sessions-table.xml"/>
 </databaseChangeLog>

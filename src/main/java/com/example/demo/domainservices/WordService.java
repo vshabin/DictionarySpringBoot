@@ -34,13 +34,17 @@ public class WordService {
     public WordModelReturn getByName(String word) {
         word = word.toLowerCase().trim();
         WordModelReturn model = repository.getByName(word);
-        model.setWord(StringUtils.capitalize(model.getWord()));
+        if (model != null) {
+            model.setWord(StringUtils.capitalize(model.getWord()));
+        }
         return model;
     }
 
     public WordModelReturn getById(UUID id) {
         WordModelReturn model = repository.getById(id);
-        model.setWord(StringUtils.capitalize(model.getWord()));
+        if (model != null) {
+            model.setWord(StringUtils.capitalize(model.getWord()));
+        }
         return model;
     }
 

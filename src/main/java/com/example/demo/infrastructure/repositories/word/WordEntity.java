@@ -7,6 +7,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import javax.persistence.*;
+import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.UUID;
 
@@ -33,5 +34,5 @@ public class WordEntity {
 
     @Column(name = CREATED_AT)
     @WhenCreated
-    private Date createdAt;
+    private LocalDateTime createdAt;
 }
