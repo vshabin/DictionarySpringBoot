@@ -3,18 +3,18 @@ package com.example.demo.api;
 import com.example.demo.domain.common.GuidResultModel;
 import com.example.demo.domain.user.UserModelPost;
 import com.example.demo.domain.user.UserModelReturn;
-import com.example.demo.domainservices.AuthService;
-import com.example.demo.domainservices.JwtProvider;
 import com.example.demo.domainservices.UserService;
+import com.example.demo.infrastructure.CommonUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import org.springframework.security.access.prepost  .PreAuthorize;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.inject.Inject;
+import java.util.Collection;
 import java.util.UUID;
 
 @RestController
@@ -37,11 +37,14 @@ public class UserController {
         return service.getByLogin(login);
     }
     @PutMapping(value = "/add")
-    @PreAuthorize("hasAuthority('ADMIN')")
     @Operation(summary = "Add new user", description = "Returns the created object or an error")
     public GuidResultModel add(@Valid @RequestBody UserModelPost model) {
         return service.save(model);
     }
 
+    @GetMapping(value = "/test")
+    public Collection<? extends GrantedAuthority> test() {
+        return CommonUtils.test();
+    }
 
 }

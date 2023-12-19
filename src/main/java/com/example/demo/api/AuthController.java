@@ -5,6 +5,7 @@ import com.example.demo.domain.JWT.JwtResponse;
 import com.example.demo.domain.common.GeneralResultModel;
 import com.example.demo.domainservices.AuthService;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.annotation.security.PermitAll;
 import jakarta.validation.Valid;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -20,6 +21,7 @@ public class AuthController {
     private AuthService service;
 
     @PostMapping("/login")
+    @PermitAll
     public JwtResponse login(@Valid @RequestBody JwtRequest request) {
         return service.login(request);
     }

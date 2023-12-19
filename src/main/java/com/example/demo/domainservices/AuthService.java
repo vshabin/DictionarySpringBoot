@@ -37,8 +37,8 @@ public class AuthService {
         }
         UserModelReturn user = userService.getByLogin(request.getLogin());
         UUID sessionId = UUID.randomUUID();
-        var accessToken = tokenProvider.generateAccessToken(user.getLogin(), user.getId(), sessionId, user.getRole());
-        var refreshToken = tokenProvider.generateRefreshToken(user.getLogin(), user.getId(), sessionId);
+        var accessToken = tokenProvider.generateAccessToken(user.getLogin(), user.getFullName(), user.getId(), sessionId, user.getRole());
+        var refreshToken = tokenProvider.generateRefreshToken(user.getLogin(), user.getFullName(), user.getId(), sessionId);
 
         repository.save(sessionId, refreshToken, tokenProvider.getRefreshClaims(refreshToken).getExpiration(), accessToken, tokenProvider.getAccessClaims(accessToken).getExpiration(), user.getId());
         return new JwtResponse(accessToken,refreshToken,"", "");
@@ -53,8 +53,9 @@ public class AuthService {
         UUID userId= UUID.fromString(claims.get("userId",String.class));
         UUID sessionId = UUID.fromString(claims.get("sessionId",String.class));
         Role role = Role.valueOf(claims.get("role", String.class));
-        String accessToken = tokenProvider.generateAccessToken(login, userId, sessionId, role);
-        String newRefreshToken = tokenProvider.generateRefreshToken(login, userId, sessionId);
+        String fullName = claims.get("fullName",String.class);
+        String accessToken = tokenProvider.generateAccessToken(login, fullName, userId, sessionId, role);
+        String newRefreshToken = tokenProvider.generateRefreshToken(login, fullName, userId, sessionId);
         repository.update(sessionId,newRefreshToken,tokenProvider.getRefreshClaims(newRefreshToken).getExpiration(),accessToken, tokenProvider.getAccessClaims(accessToken).getExpiration());
         return new JwtResponse(accessToken, newRefreshToken,"","");
     }

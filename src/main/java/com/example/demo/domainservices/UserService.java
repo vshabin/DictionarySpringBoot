@@ -7,9 +7,11 @@ import com.example.demo.infrastructure.repositories.user.UserRepository;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import javax.inject.Inject;
+import java.beans.Encoder;
 import java.util.UUID;
 
 @Service
@@ -18,6 +20,8 @@ public class UserService {
     private static final String USER_ALREADY_EXIST_ERROR_MESSAGE = "Такой пользователь уже существует: ";
     @Inject
     private UserRepository repository;
+    @Inject
+    private PasswordEncoder encoder;
 
     public UserModelReturn getById(UUID id) {
         return repository.getById(id);
@@ -31,11 +35,12 @@ public class UserService {
         if(repository.exists(model.getLogin())) {
             return new GuidResultModel(USER_ALREADY_EXIST_ERROR_CODE, USER_ALREADY_EXIST_ERROR_MESSAGE + model.getLogin());
         }
+        model.setPassword(encoder.encode(model.getPassword()));
         return repository.save(model);
     }
 
     public boolean isRightPassword(String login, String password) {
-        return repository.isRightPassword(login, password);
+        return encoder.matches(password, repository.getEncodedPassword(login));
     }
 
     public boolean exists(String login) {

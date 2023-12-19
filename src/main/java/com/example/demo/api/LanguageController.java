@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -29,6 +30,7 @@ public class LanguageController {
     private LanguageService service;
 
     @PutMapping(value = "/add")
+    @PreAuthorize("hasAuthority('ADMIN')")
     @Operation(summary = "Add new language", description = "Returns the created object or an error")
     public GuidResultModel add(@Valid @RequestBody LanguageModelAdd languageModel) {
         return service.save(languageModel);
@@ -47,18 +49,21 @@ public class LanguageController {
     }
 
     @PostMapping(value = "/update")
+    @PreAuthorize("hasAuthority('ADMIN')")
     @Operation(summary = "Update language", description = "Returns the updated language or an error")
     public LanguageModelReturn update(@Valid @RequestBody LanguageModelReturn languageModel) {
         return service.update(languageModel);
     }
 
     @DeleteMapping(value = "/delete/{id}")
+    @PreAuthorize("hasAuthority('ADMIN')")
     @Operation(summary = "Delete language by id", description = "Returns empty body or an error")
     public GeneralResultModel delete(@PathVariable UUID id) {
         return service.delete(id);
     }
 
     @PutMapping(value = "/addList")
+    @PreAuthorize("hasAuthority('ADMIN')")
     @Operation(summary = "Add several new languages", description = "Returns a list containing added languages or errors")
     public List<LanguageModelReturn> addList(@RequestBody List<@Valid LanguageModelAdd> modelAddList) {
         return service.saveList(modelAddList);

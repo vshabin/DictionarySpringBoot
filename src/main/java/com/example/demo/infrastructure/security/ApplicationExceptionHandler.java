@@ -1,6 +1,7 @@
-package com.example.demo.infrastructure;
+package com.example.demo.infrastructure.security;
 
 import com.example.demo.domain.common.GeneralResultModel;
+import com.example.demo.infrastructure.JsonUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.ConstraintViolationException;

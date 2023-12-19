@@ -19,4 +19,5 @@
     <include file="/db/changelog/changes2023/20231215-users-table.xml"/>
     <include file="/db/changelog/changes2023/20231215-sessions-table.xml"/>
     <include file="/db/changelog/changes2023/20231218-sessions-table.xml"/>
+    <include file="/db/changelog/changes2023/20231219-users-table.xml"/>
 </databaseChangeLog>

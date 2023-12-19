@@ -12,6 +12,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -28,6 +29,7 @@ public class WordController {
     private WordService service;
 
     @PutMapping(value = "/add")
+    @PreAuthorize("hasAuthority('ADMIN')")
     @Operation(summary = "Add new word", description = "Returns the created object or an error")
     public GuidResultModel add(@Valid @RequestBody WordModelPost model) {
         return service.save(model);
@@ -46,18 +48,21 @@ public class WordController {
     }
 
     @PostMapping(value = "/update")
+    @PreAuthorize("hasAuthority('ADMIN')")
     @Operation(summary = "Update word", description = "Returns the updated word or an error")
     public WordModelReturn update(@Valid @RequestBody WordModelReturn model) {
         return service.update(model);
     }
 
     @DeleteMapping(value = "/delete/{id}")
+    @PreAuthorize("hasAuthority('ADMIN')")
     @Operation(summary = "Delete word by id", description = "Returns empty body or an error")
     public GeneralResultModel delete(@PathVariable @Parameter(name = "Word UUID", description = "Word id", example = "1e723432-ed5e-420e-9cf8-3a51ff669735") UUID id) {
         return service.delete(id);
     }
 
     @PutMapping(value = "/addList")
+    @PreAuthorize("hasAuthority('ADMIN')")
     @Operation(summary = "Add several new words", description = "Returns a list containing added words or errors")
     public List<WordModelReturn> addList(@RequestBody List<@Valid WordModelPost> addList) {
         return service.saveList(addList);

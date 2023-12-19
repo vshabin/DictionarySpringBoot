@@ -10,6 +10,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -26,6 +27,7 @@ public class AssociationController {
     private AssociationService service;
 
     @PutMapping(value = "/add")
+    @PreAuthorize("hasAuthority('ADMIN')")
     @Operation(summary = "Add new association", description = "Returns the created object or an error")
     public GuidResultModel add(@RequestBody @Valid AssociationModelAdd model) {
         return service.save(model);
@@ -38,18 +40,21 @@ public class AssociationController {
     }
 
     @PostMapping(value = "/update")
+    @PreAuthorize("hasAuthority('ADMIN')")
     @Operation(summary = "Update association", description = "Returns the updated association or an error")
     public AssociationModelReturn update(@RequestBody @Valid AssociationModelReturn model) {
         return service.update(model);
     }
 
     @DeleteMapping(value = "/delete/{id}")
+    @PreAuthorize("hasAuthority('ADMIN')")
     @Operation(summary = "Delete association by id", description = "Returns empty body or an error")
     public GeneralResultModel delete(@PathVariable UUID id) {
         return service.delete(id);
     }
 
     @PutMapping(value = "/addList")
+    @PreAuthorize("hasAuthority('ADMIN')")
     @Operation(summary = "Add several new associations", description = "Returns a list containing added associations or errors")
     public List<AssociationModelReturn> addList(@RequestBody List<@Valid AssociationModelAdd> modelAddList) {
         return service.saveList(modelAddList);

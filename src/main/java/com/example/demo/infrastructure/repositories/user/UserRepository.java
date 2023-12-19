@@ -1,11 +1,14 @@
 package com.example.demo.infrastructure.repositories.user;
 
 import com.example.demo.domain.common.GuidResultModel;
+
 import com.example.demo.domain.user.UserModelPost;
 import com.example.demo.domain.user.UserModelReturn;
 import com.example.demo.infrastructure.repositories.DbServer;
 import com.example.demo.infrastructure.repositories.UserMapper;
 import io.ebean.annotation.Transactional;
+import io.ebeaninternal.server.util.Str;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Repository;
 
 import javax.inject.Inject;
@@ -61,12 +64,12 @@ public class UserRepository {
         return new GuidResultModel(entity.getId());
     }
 
-    public boolean isRightPassword(String login, String password) {
+    public String getEncodedPassword(String login) {
         return dbServer.getDB()
                 .find(UserEntity.class)
+                .select(UserEntity.PASSWORD)
                 .where()
-                .eq(UserEntity.LOGIN, login)
-                .eq(UserEntity.PASSWORD, password)
-                .exists();
+                .eq(UserEntity.LOGIN,login)
+                .findSingleAttribute();
     }
 }
