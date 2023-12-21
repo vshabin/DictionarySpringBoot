@@ -1,9 +1,11 @@
 package com.example.demo;
 
 import com.example.demo.infrastructure.repositories.DbServer;
+import com.example.demo.infrastructure.security.UserProvider;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import io.ebean.DatabaseFactory;
+import io.ebean.config.CurrentUserProvider;
 import io.ebean.config.DatabaseConfig;
 import liquibase.Contexts;
 import liquibase.LabelExpression;
@@ -40,6 +42,7 @@ public class ApplicationStartup implements ApplicationRunner {
 
     private static HikariConfig config= new HikariConfig();
     private static HikariDataSource ds= new HikariDataSource();
+    private static CurrentUserProvider userProvider= new UserProvider();
 
     @Inject
     DbServer dbServer;
@@ -61,6 +64,7 @@ public class ApplicationStartup implements ApplicationRunner {
         cfg.setName(serverName);
         cfg.setDataSource(ds);
         cfg.setDefaultServer(true);
+        cfg.setCurrentUserProvider(userProvider);
         dbServer.setDB(DatabaseFactory.create(cfg));
 
         DatabaseConnection databaseConnection= new JdbcConnection(ds.getConnection());

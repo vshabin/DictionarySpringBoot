@@ -1,13 +1,15 @@
 package com.example.demo.infrastructure.repositories.language;
 
-import com.example.demo.domain.common.*;
+import com.example.demo.domain.common.GeneralResultModel;
+import com.example.demo.domain.common.GuidResultModel;
+import com.example.demo.domain.common.PageResult;
 import com.example.demo.domain.language.LanguageCriteriaModel;
 import com.example.demo.domain.language.LanguageModelAdd;
 import com.example.demo.domain.language.LanguageModelReturn;
 import com.example.demo.infrastructure.repositories.DbServer;
 import com.example.demo.infrastructure.repositories.LanguageMapper;
-import com.example.demo.infrastructure.repositories.word.WordEntity;
-import io.ebean.*;
+import io.ebean.ExpressionList;
+import io.ebean.PagedList;
 import io.ebean.annotation.Transactional;
 import io.micrometer.common.util.StringUtils;
 import org.springframework.stereotype.Repository;
@@ -29,20 +31,12 @@ public class LanguageRepository {
     LanguageMapper mapStructMapper;
 
     public LanguageModelReturn findByName(String name) {
-        LanguageEntity entity = dbServer.getDB()
-                .find(LanguageEntity.class)
-                .where()
-                .eq(LanguageEntity.NAME, name)
-                .findOne();
+        LanguageEntity entity = dbServer.getDB().find(LanguageEntity.class).where().eq(LanguageEntity.NAME, name).findOne();
         return mapStructMapper.toLanguageModelReturn(entity);
     }
 
     public LanguageModelReturn findById(UUID id) {
-        LanguageEntity entity = dbServer.getDB()
-                .find(LanguageEntity.class)
-                .where()
-                .eq(LanguageEntity.ID, id)
-                .findOne();
+        LanguageEntity entity = dbServer.getDB().find(LanguageEntity.class).where().eq(LanguageEntity.ID, id).findOne();
         return mapStructMapper.toLanguageModelReturn(entity);
     }
 
@@ -65,12 +59,7 @@ public class LanguageRepository {
         LanguageModelReturn resultModel;
         LanguageEntity entity = mapStructMapper.toLanguageEntity(languageModel);
         try {
-            dbServer.getDB()
-                    .update(LanguageEntity.class)
-                    .set(LanguageEntity.NAME, entity.getName())
-                    .where()
-                    .eq(LanguageEntity.ID, entity.getId())
-                    .update();
+            dbServer.getDB().update(LanguageEntity.class).set(LanguageEntity.NAME, entity.getName()).where().eq(LanguageEntity.ID, entity.getId()).update();
         } catch (Exception e) {
             resultModel = new LanguageModelReturn(DATABASE_TRANSACTION_ERROR_CODE, DATABASE_TRANSACTION_ERROR_MESSAGE + e.getMessage());
             return resultModel;
@@ -83,10 +72,7 @@ public class LanguageRepository {
     public GeneralResultModel delete(UUID id) {
         GeneralResultModel resultModel;
         try {
-            dbServer.getDB().find(LanguageEntity.class)
-                    .where()
-                    .eq(LanguageEntity.ID, id)
-                    .delete();
+            dbServer.getDB().find(LanguageEntity.class).where().eq(LanguageEntity.ID, id).delete();
         } catch (Exception e) {
             resultModel = new GeneralResultModel(DATABASE_TRANSACTION_ERROR_CODE, DATABASE_TRANSACTION_ERROR_MESSAGE + e.getMessage());
             return resultModel;
@@ -111,21 +97,11 @@ public class LanguageRepository {
     }
 
     public List<String> findExist(List<String> name) {
-        return mapStructMapper.toLanguageModelReturnList(dbServer.getDB()
-                .find(LanguageEntity.class)
-                .where()
-                .in(LanguageEntity.NAME, name)
-                .findList()).stream().map(LanguageModelReturn::getName).collect(Collectors.toList());
+        return mapStructMapper.toLanguageModelReturnList(dbServer.getDB().find(LanguageEntity.class).where().in(LanguageEntity.NAME, name).findList()).stream().map(LanguageModelReturn::getName).collect(Collectors.toList());
     }
 
     public PageResult<LanguageModelReturn> criteriaQuery(LanguageCriteriaModel languageCriteriaModel) {
-        PagedList<LanguageEntity> entityPagedList = createExpression(languageCriteriaModel,
-                dbServer.getDB()
-                        .find(LanguageEntity.class)
-                        .setFirstRow(languageCriteriaModel.getSize() * (languageCriteriaModel.getPageNumber() - 1))
-                        .setMaxRows(languageCriteriaModel.getSize())
-                        .where())
-                .findPagedList();
+        PagedList<LanguageEntity> entityPagedList = createExpression(languageCriteriaModel, dbServer.getDB().find(LanguageEntity.class).setFirstRow(languageCriteriaModel.getSize() * (languageCriteriaModel.getPageNumber() - 1)).setMaxRows(languageCriteriaModel.getSize()).where()).findPagedList();
         return new PageResult<>(mapStructMapper.toLanguageModelReturnList(entityPagedList.getList()), entityPagedList.getTotalCount());
     }
 
@@ -150,26 +126,14 @@ public class LanguageRepository {
     }
 
     public List<UUID> findExistById(List<UUID> languageIds) {
-        return mapStructMapper.toLanguageModelReturnList(dbServer.getDB()
-                .find(LanguageEntity.class)
-                .where()
-                .in(LanguageEntity.ID, languageIds)
-                .findList()).stream().map(LanguageModelReturn::getId).collect(Collectors.toList());
+        return mapStructMapper.toLanguageModelReturnList(dbServer.getDB().find(LanguageEntity.class).where().in(LanguageEntity.ID, languageIds).findList()).stream().map(LanguageModelReturn::getId).collect(Collectors.toList());
     }
 
     public boolean exists(UUID id) {
-        return dbServer.getDB()
-                .find(LanguageEntity.class)
-                .where()
-                .eq(LanguageEntity.ID, id)
-                .exists();
+        return dbServer.getDB().find(LanguageEntity.class).where().eq(LanguageEntity.ID, id).exists();
     }
 
     public boolean exists(String name) {
-        return dbServer.getDB()
-                .find(LanguageEntity.class)
-                .where()
-                .eq(LanguageEntity.NAME, name)
-                .exists();
+        return dbServer.getDB().find(LanguageEntity.class).where().eq(LanguageEntity.NAME, name).exists();
     }
 }

@@ -36,12 +36,14 @@ public class WordController {
     }
 
     @GetMapping(value = "/searchById/{id}")
+    @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Get a word by id", description = "Returns a word as per the id or an error")
     public WordModelReturn getById(@PathVariable @Parameter(name = "Word UUID", description = "Word id", example = "1e723432-ed5e-420e-9cf8-3a51ff669735") UUID id) {
         return service.getById(id);
     }
 
     @GetMapping(value = "/searchByName/{name}")
+    @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Get a word by name", description = "Returns a word as per the name or an error")
     public WordModelReturn getByName(@PathVariable @Parameter(name = "Word name", description = "Lettered word", example = "Dog") String name) {
         return service.getByName(name);
@@ -69,18 +71,21 @@ public class WordController {
     }
 
     @PostMapping(value = "/criteria")
+    @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Performs searches with filtering results", description = "Returns a list containing the found words")
     public PageResult<WordModelReturn> criteriaQuery(@Valid @RequestBody WordCriteriaModel criteriaModel) {
         return service.criteriaQuery(criteriaModel);
     }
 
     @GetMapping(value = "/searchByIdEnriched/{id}")
+    @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Get a word with language name by id", description = "Returns a enriched word as per the id or an error")
     public WordModelReturnEnriched getByIdEnriched(@PathVariable @Parameter(name = "Word UUID", description = "Word id", example = "1e723432-ed5e-420e-9cf8-3a51ff669735") UUID id) {
         return service.getByIdEnriched(id);
     }
 
     @GetMapping(value = "/searchByNameEnriched/{name}")
+    @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Get a word with language name by name", description = "Returns a enriched word as per the name or an error")
     public WordModelReturnEnriched getByNameEnriched(@PathVariable @Parameter(name = "Word name", description = "Lettered word", example = "Dog") String name) {
         return service.getByNameEnriched(name);

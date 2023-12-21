@@ -1,10 +1,12 @@
 package com.example.demo.infrastructure.security;
 
+import com.example.demo.domain.JWT.ParsingResult;
 import com.example.demo.domain.common.GeneralResultModel;
 import com.example.demo.domain.user.UserCredentials;
 import com.example.demo.domainservices.JwtProvider;
 import com.example.demo.infrastructure.JsonUtils;
 import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
 import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServletRequest;
@@ -20,6 +22,7 @@ import org.springframework.web.filter.GenericFilterBean;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 @Component
@@ -34,18 +37,26 @@ public class JwtAuthFilter extends GenericFilterBean {
     private JwtProvider jwtProvider;
 
     @Override
-    public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException {
-        try {
-            String path = ((HttpServletRequest) request).getRequestURI();
-            if ("/auth/login".equals(path)) {
-                chain.doFilter(request, response);
-                return;
-            }
+    public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
+        var parsingResult = getAuthentication((HttpServletRequest) request);
+        if (parsingResult.getParsingResultType() == ParsingResult.ParsingResultType.ERROR) {
+            ((HttpServletResponse) response).setStatus(403);
+            response.setContentType("application/json");
+            response.getWriter().write(JsonUtils.toJson(new GeneralResultModel(JWT_FILTER_ERROR_CODE, JWT_FILTER_ERROR_MESSAGE)));
+            response.getWriter().flush();
+            return;
+        }
+        SecurityContextHolder.getContext().setAuthentication(parsingResult.getAuthentication());
+        chain.doFilter(request,response);
+    }
 
+    private ParsingResult getAuthentication(HttpServletRequest request){
+        try {
             String authHeader = ((HttpServletRequest) request).getHeader(AUTHORIZATION);
             if (authHeader == null) {
-                throw new Exception("Missing access token");
+                return new ParsingResult(ParsingResult.ParsingResultType.UNAUTHORIZED, null);
             }
+
             var token = authHeader.substring(authHeader.lastIndexOf(' ') + 1);
             var claims = jwtProvider.getAccessClaims(token);
 
@@ -61,15 +72,10 @@ public class JwtAuthFilter extends GenericFilterBean {
             var role = claims.get(SecurityConst.ROLE_CLAIM, String.class);
             var authorities = List.of(new SimpleGrantedAuthority(role));
 
-            var authToken = new UsernamePasswordAuthenticationToken(claims.getSubject(), userCredentials, authorities);
-            SecurityContextHolder.getContext().setAuthentication(authToken);
-
-            chain.doFilter(request, response);
+            var auth = new UsernamePasswordAuthenticationToken(claims.getSubject(), userCredentials, authorities);
+            return new ParsingResult(ParsingResult.ParsingResultType.OK, auth);
         } catch (Exception e) {
-            ((HttpServletResponse) response).setStatus(403);
-            response.setContentType("application/json");
-            response.getWriter().write(JsonUtils.toJson(new GeneralResultModel(JWT_FILTER_ERROR_CODE, JWT_FILTER_ERROR_MESSAGE + e.getMessage())));
-            response.getWriter().flush();
+            return new ParsingResult(ParsingResult.ParsingResultType.ERROR, null);
         }
     }
 }

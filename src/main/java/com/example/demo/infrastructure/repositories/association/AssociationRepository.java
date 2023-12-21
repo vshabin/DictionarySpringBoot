@@ -6,7 +6,6 @@ import com.example.demo.domain.common.GuidResultModel;
 import com.example.demo.domain.common.PageResult;
 import com.example.demo.domain.word.WordModelReturn;
 import com.example.demo.infrastructure.repositories.AssociationMapper;
-
 import com.example.demo.infrastructure.repositories.DbServer;
 import com.example.demo.infrastructure.repositories.WordMapper;
 import com.example.demo.infrastructure.repositories.language.LanguageEntity;
@@ -35,11 +34,7 @@ public class AssociationRepository {
     private DbServer dbServer;
 
     public AssociationModelReturn findById(UUID id) {
-        AssociationEntity entity = dbServer.getDB()
-                .find(AssociationEntity.class)
-                .where()
-                .eq(AssociationEntity.ID, id)
-                .findOne();
+        AssociationEntity entity = dbServer.getDB().find(AssociationEntity.class).where().eq(AssociationEntity.ID, id).findOne();
         return mapStructMapper.toAssociationModelReturn(entity);
     }
 
@@ -75,10 +70,7 @@ public class AssociationRepository {
     public GeneralResultModel delete(UUID id) {
         GeneralResultModel resultModel;
         try {
-            dbServer.getDB().find(AssociationEntity.class)
-                    .where()
-                    .eq(AssociationEntity.ID, id)
-                    .delete();
+            dbServer.getDB().find(AssociationEntity.class).where().eq(AssociationEntity.ID, id).delete();
         } catch (Exception e) {
             resultModel = new GeneralResultModel(DATABASE_TRANSACTION_ERROR_CODE, DATABASE_TRANSACTION_ERROR_MESSAGE + e.getMessage());
             return resultModel;
@@ -112,13 +104,7 @@ public class AssociationRepository {
 //    }
 
     public PageResult<AssociationModelReturn> criteriaQuery(AssociationCriteriaModel criteriaModel) {
-        PagedList<AssociationEntity> entityPagedList = createExpression(criteriaModel,
-                dbServer.getDB()
-                        .find(AssociationEntity.class)
-                        .setFirstRow(criteriaModel.getSize() * (criteriaModel.getPageNumber() - 1))
-                        .setMaxRows(criteriaModel.getSize())
-                        .where())
-                .findPagedList();
+        PagedList<AssociationEntity> entityPagedList = createExpression(criteriaModel, dbServer.getDB().find(AssociationEntity.class).setFirstRow(criteriaModel.getSize() * (criteriaModel.getPageNumber() - 1)).setMaxRows(criteriaModel.getSize()).where()).findPagedList();
         return new PageResult<>(mapStructMapper.toAssociationModelList(entityPagedList.getList()), entityPagedList.getTotalCount());
     }
 
@@ -130,11 +116,7 @@ public class AssociationRepository {
             expr.eq(AssociationEntity.TRANSLATION, criteriaModel.getTranslationIdFilter());
         }
         if (criteriaModel.getAnyWordIdFilter() != null) {
-            expr
-                    .or()
-                    .eq(AssociationEntity.WORD, criteriaModel.getAnyWordIdFilter())
-                    .eq(AssociationEntity.TRANSLATION, criteriaModel.getAnyWordIdFilter())
-                    .endOr();
+            expr.or().eq(AssociationEntity.WORD, criteriaModel.getAnyWordIdFilter()).eq(AssociationEntity.TRANSLATION, criteriaModel.getAnyWordIdFilter()).endOr();
         }
         if (StringUtils.isNotBlank(criteriaModel.getWordFilter())) {
             var words = dbServer.getDB().find(WordEntity.class).where().like(WordEntity.WORD, escape(criteriaModel.getWordFilter(), '%')).findIds();
@@ -151,10 +133,7 @@ public class AssociationRepository {
         if (StringUtils.isNotBlank(criteriaModel.getAnyWordFilter())) {
             var words = dbServer.getDB().find(WordEntity.class).where().like(WordEntity.WORD, escape(criteriaModel.getAnyWordFilter(), '%')).findIds();
             if (!words.isEmpty()) {
-                expr
-                        .or()
-                        .in(AssociationEntity.WORD, words)
-                        .in(AssociationEntity.TRANSLATION, words);
+                expr.or().in(AssociationEntity.WORD, words).in(AssociationEntity.TRANSLATION, words);
             }
         }
         if (criteriaModel.getWordLanguageIdFilter() != null) {
@@ -172,10 +151,7 @@ public class AssociationRepository {
         if (criteriaModel.getAnyLanguageIdFilter() != null) {
             var words = dbServer.getDB().find(WordEntity.class).where().eq(WordEntity.LANGUAGE, criteriaModel.getAnyLanguageIdFilter()).findIds();
             if (!words.isEmpty()) {
-                expr
-                        .or()
-                        .in(AssociationEntity.WORD, words)
-                        .in(AssociationEntity.TRANSLATION, words);
+                expr.or().in(AssociationEntity.WORD, words).in(AssociationEntity.TRANSLATION, words);
             }
         }
         if (StringUtils.isNotBlank(criteriaModel.getWordLanguageNameFilter())) {
@@ -196,10 +172,7 @@ public class AssociationRepository {
             var languages = dbServer.getDB().find(LanguageEntity.class).where().like(LanguageEntity.NAME, escape(criteriaModel.getAnyLanguageFilter(), '%')).findIds();
             var words = dbServer.getDB().find(WordEntity.class).where().in(WordEntity.LANGUAGE, languages).findIds();
             if (!words.isEmpty()) {
-                expr
-                        .or()
-                        .in(AssociationEntity.WORD, words)
-                        .in(AssociationEntity.TRANSLATION, words);
+                expr.or().in(AssociationEntity.WORD, words).in(AssociationEntity.TRANSLATION, words);
             }
         }
         if (criteriaModel.getFromFilter() != null) {
@@ -215,11 +188,7 @@ public class AssociationRepository {
     }
 
     public boolean exists(UUID association) {
-        return dbServer.getDB()
-                .find(AssociationEntity.class)
-                .where()
-                .eq(AssociationEntity.ID, association)
-                .exists();
+        return dbServer.getDB().find(AssociationEntity.class).where().eq(AssociationEntity.ID, association).exists();
     }
 
     private String escape(String string, char esc) {
@@ -227,78 +196,27 @@ public class AssociationRepository {
     }
 
     public List<UUID> getAllAssociations(UUID word) {
-        return dbServer.getDB()
-                .find(AssociationEntity.class)
-                .select(AssociationEntity.TRANSLATION)
-                .where()
-                .eq(AssociationEntity.WORD, word)
-                .findSingleAttributeList();
+        return dbServer.getDB().find(AssociationEntity.class).select(AssociationEntity.TRANSLATION).where().eq(AssociationEntity.WORD, word).findSingleAttributeList();
     }
 
     public AssociationModelReturnEnriched getByIdEnriched(UUID id) {
-        AssociationEntity associationEntity = dbServer.getDB()
-                .find(AssociationEntity.class)
-                .where()
-                .eq(AssociationEntity.ID, id)
-                .findOne();
+        AssociationEntity associationEntity = dbServer.getDB().find(AssociationEntity.class).where().eq(AssociationEntity.ID, id).findOne();
         if (associationEntity == null) {
             return null;
         }
-        WordEntity wordEntity = dbServer.getDB()
-                .find(WordEntity.class)
-                .where()
-                .eq(WordEntity.ID, associationEntity.getWord())
-                .findOne();
-        WordEntity translationEntity = dbServer.getDB()
-                .find(WordEntity.class)
-                .where()
-                .eq(WordEntity.ID, associationEntity.getTranslation())
-                .findOne();
-        LanguageEntity wordLanguageEntity = dbServer.getDB()
-                .find(LanguageEntity.class)
-                .where()
-                .eq(LanguageEntity.ID, wordEntity.getLanguageId())
-                .findOne();
-        LanguageEntity translationLanguageEntity = dbServer.getDB()
-                .find(LanguageEntity.class)
-                .where()
-                .eq(LanguageEntity.ID, translationEntity.getLanguageId())
-                .findOne();
+        WordEntity wordEntity = dbServer.getDB().find(WordEntity.class).where().eq(WordEntity.ID, associationEntity.getWord()).findOne();
+        WordEntity translationEntity = dbServer.getDB().find(WordEntity.class).where().eq(WordEntity.ID, associationEntity.getTranslation()).findOne();
+        LanguageEntity wordLanguageEntity = dbServer.getDB().find(LanguageEntity.class).where().eq(LanguageEntity.ID, wordEntity.getLanguageId()).findOne();
+        LanguageEntity translationLanguageEntity = dbServer.getDB().find(LanguageEntity.class).where().eq(LanguageEntity.ID, translationEntity.getLanguageId()).findOne();
         return mapStructMapper.toAssociationModelReturnEnriched(associationEntity, wordEntity, translationEntity, wordLanguageEntity, translationLanguageEntity);
     }
 
     public PageResult<WordModelReturn> translate(TranslationRequest request) {
-        LanguageEntity wordLanguageEntity = dbServer.getDB()
-                .find(LanguageEntity.class)
-                .where()
-                .eq(LanguageEntity.NAME, request.getWordLanguage())
-                .findOne();
-        LanguageEntity translationLanguageEntity = dbServer.getDB()
-                .find(LanguageEntity.class)
-                .where()
-                .eq(LanguageEntity.NAME, request.getTranslationLanguage())
-                .findOne();
-        WordEntity word = dbServer.getDB()
-                .find(WordEntity.class)
-                .where()
-                .eq(WordEntity.WORD, request.getWord())
-                .eq(WordEntity.LANGUAGE, wordLanguageEntity.getId())
-                .findOne();
-        var translations = dbServer.getDB()
-                .find(AssociationEntity.class)
-                .select(AssociationEntity.TRANSLATION)
-                .where()
-                .eq(AssociationEntity.WORD, word.getId())
-                .findSingleAttributeList();
-        PagedList<WordEntity> entityPagedList =
-                dbServer.getDB()
-                        .find(WordEntity.class)
-                        .setFirstRow(request.getSize() * (request.getPageNumber() - 1))
-                        .setMaxRows(request.getSize())
-                        .where()
-                        .in(WordEntity.ID, translations)
-                        .eq(WordEntity.LANGUAGE, translationLanguageEntity.getId())
-                        .findPagedList();
+        LanguageEntity wordLanguageEntity = dbServer.getDB().find(LanguageEntity.class).where().eq(LanguageEntity.NAME, request.getWordLanguage()).findOne();
+        LanguageEntity translationLanguageEntity = dbServer.getDB().find(LanguageEntity.class).where().eq(LanguageEntity.NAME, request.getTranslationLanguage()).findOne();
+        WordEntity word = dbServer.getDB().find(WordEntity.class).where().eq(WordEntity.WORD, request.getWord()).eq(WordEntity.LANGUAGE, wordLanguageEntity.getId()).findOne();
+        var translations = dbServer.getDB().find(AssociationEntity.class).select(AssociationEntity.TRANSLATION).where().eq(AssociationEntity.WORD, word.getId()).findSingleAttributeList();
+        PagedList<WordEntity> entityPagedList = dbServer.getDB().find(WordEntity.class).setFirstRow(request.getSize() * (request.getPageNumber() - 1)).setMaxRows(request.getSize()).where().in(WordEntity.ID, translations).eq(WordEntity.LANGUAGE, translationLanguageEntity.getId()).findPagedList();
         return new PageResult<>(wordMapper.toWordModelReturnList(entityPagedList.getList()), entityPagedList.getTotalCount());
     }
 }

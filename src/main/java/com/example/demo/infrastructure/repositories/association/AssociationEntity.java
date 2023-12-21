@@ -3,6 +3,7 @@ package com.example.demo.infrastructure.repositories.association;
 import com.example.demo.infrastructure.repositories.word.WordEntity;
 import io.ebean.annotation.NotNull;
 import io.ebean.annotation.WhenCreated;
+import io.ebean.annotation.WhoCreated;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -20,6 +21,7 @@ public class AssociationEntity {
     public static final String WORD = "word";
     public static final String TRANSLATION = "translation";
     public static final String CREATED_AT = "created_at";
+    public static final String CREATED_BY_USER_ID = "created_by_user_id";
 
     @Id
     @Column(name = ID)
@@ -36,4 +38,8 @@ public class AssociationEntity {
     @Column(name = CREATED_AT)
     @WhenCreated
     private LocalDateTime createdAt;
+
+    @Column(name=CREATED_BY_USER_ID)
+    @WhoCreated
+    private UUID createdByUserId;
 }

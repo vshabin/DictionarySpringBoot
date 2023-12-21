@@ -17,7 +17,10 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 @Constraint(validatedBy = RoleTypeValidator.class)
 public @interface RoleTypeValidate {
     Role[] anyOf();
+
     String message() default "must be any of {anyOf}";
+
     Class<?>[] groups() default {};
+
     Class<? extends Payload>[] payload() default {};
 }

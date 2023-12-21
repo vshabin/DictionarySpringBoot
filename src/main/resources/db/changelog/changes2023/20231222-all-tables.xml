@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="20231222-all-tables" author="Vitalik">
+        <renameColumn tableName="languages" oldColumnName="created_by" newColumnName="created_by_user_id"/>
+        <renameColumn tableName="words" oldColumnName="created_by" newColumnName="created_by_user_id"/>
+        <renameColumn tableName="association" oldColumnName="created_by" newColumnName="created_by_user_id"/>
+    </changeSet>
+</databaseChangeLog>

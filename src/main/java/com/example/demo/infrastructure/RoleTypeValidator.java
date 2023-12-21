@@ -9,6 +9,7 @@ import java.util.Arrays;
 
 public class RoleTypeValidator implements ConstraintValidator<RoleTypeValidate, Role> {
     private Role[] subset;
+
     @Override
     public void initialize(RoleTypeValidate constraintAnnotation) {
         this.subset = constraintAnnotation.anyOf();

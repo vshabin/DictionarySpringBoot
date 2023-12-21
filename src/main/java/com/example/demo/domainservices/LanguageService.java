@@ -2,8 +2,8 @@ package com.example.demo.domainservices;
 
 import com.example.demo.domain.common.GeneralResultModel;
 import com.example.demo.domain.common.GuidResultModel;
-import com.example.demo.domain.language.LanguageCriteriaModel;
 import com.example.demo.domain.common.PageResult;
+import com.example.demo.domain.language.LanguageCriteriaModel;
 import com.example.demo.domain.language.LanguageModelAdd;
 import com.example.demo.domain.language.LanguageModelReturn;
 import com.example.demo.infrastructure.repositories.language.LanguageRepository;

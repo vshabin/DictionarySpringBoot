@@ -2,22 +2,19 @@ package com.example.demo.api;
 
 import com.example.demo.domain.common.GeneralResultModel;
 import com.example.demo.domain.common.GuidResultModel;
-import com.example.demo.domain.language.LanguageCriteriaModel;
 import com.example.demo.domain.common.PageResult;
+import com.example.demo.domain.language.LanguageCriteriaModel;
 import com.example.demo.domain.language.LanguageModelAdd;
 import com.example.demo.domain.language.LanguageModelReturn;
 import com.example.demo.domainservices.LanguageService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.inject.Inject;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -37,12 +34,14 @@ public class LanguageController {
     }
 
     @GetMapping(value = "/searchById/{id}")
+    @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Get a language by id", description = "Returns a language as per the id or an error")
     public LanguageModelReturn getById(@PathVariable UUID id) {
         return service.getById(id);
     }
 
     @GetMapping(value = "/searchByName/{name}")
+    @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Get a language by name", description = "Returns a language as per the name or an error")
     public LanguageModelReturn getByName(@PathVariable String name) {
         return service.getByName(name);
@@ -70,6 +69,7 @@ public class LanguageController {
     }
 
     @PostMapping(value = "/criteria")
+    @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Performs searches with filtering results", description = "Returns a list containing the found languages")
     public PageResult<LanguageModelReturn> criteriaQuery(@Valid @RequestBody LanguageCriteriaModel languageCriteriaModel) {
         return service.criteriaQuery(languageCriteriaModel);

@@ -4,14 +4,10 @@ import com.example.demo.domain.common.GuidResultModel;
 import com.example.demo.domain.user.UserModelPost;
 import com.example.demo.domain.user.UserModelReturn;
 import com.example.demo.infrastructure.repositories.user.UserRepository;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import javax.inject.Inject;
-import java.beans.Encoder;
 import java.util.UUID;
 
 @Service
@@ -32,7 +28,7 @@ public class UserService {
     }
 
     public GuidResultModel save(UserModelPost model) {
-        if(repository.exists(model.getLogin())) {
+        if (repository.exists(model.getLogin())) {
             return new GuidResultModel(USER_ALREADY_EXIST_ERROR_CODE, USER_ALREADY_EXIST_ERROR_MESSAGE + model.getLogin());
         }
         model.setPassword(encoder.encode(model.getPassword()));

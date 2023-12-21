@@ -8,8 +8,12 @@ import com.example.demo.domainservices.AuthService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.security.PermitAll;
 import jakarta.validation.Valid;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import javax.inject.Inject;
 
@@ -28,11 +32,13 @@ public class AuthController {
     }
 
     @PostMapping("/refresh")
+    @PreAuthorize("isAuthenticated()")
     public JwtResponse refresh(@RequestBody @Valid RefreshTokenModel refreshToken) {
         return service.refresh(refreshToken);
     }
 
     @PostMapping("/logout")
+    @PreAuthorize("isAuthenticated()")
     public GeneralResultModel logout(@RequestBody @Valid RefreshTokenModel refreshToken) {
         return service.logout(refreshToken);
     }

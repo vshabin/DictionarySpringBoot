@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -26,25 +27,22 @@ public class UserController {
     private UserService service;
 
     @GetMapping(value = "/searchById/{id}")
+    @PreAuthorize("hasAuthority('ADMIN')")
     @Operation(summary = "Get a user by id", description = "Returns a user as per the id or null")
     public UserModelReturn getById(@PathVariable @Parameter(name = "User UUID", description = "User id", example = "1e723432-ed5e-420e-9cf8-3a51ff669735") UUID id) {
          return service.getById(id);
     }
 
     @GetMapping(value = "/searchByLogin/{login}")
+    @PreAuthorize("hasAuthority('ADMIN')")
     @Operation(summary = "Get a user by login", description = "Returns a user as per the login or null")
     public UserModelReturn getByLogin(@PathVariable @Parameter(name = "User login", description = "User login", example = "vshabin") String login) {
         return service.getByLogin(login);
     }
     @PutMapping(value = "/add")
+    @PreAuthorize("hasAuthority('ADMIN')")
     @Operation(summary = "Add new user", description = "Returns the created object or an error")
     public GuidResultModel add(@Valid @RequestBody UserModelPost model) {
         return service.save(model);
     }
-
-    @GetMapping(value = "/test")
-    public Collection<? extends GrantedAuthority> test() {
-        return CommonUtils.test();
-    }
-
 }

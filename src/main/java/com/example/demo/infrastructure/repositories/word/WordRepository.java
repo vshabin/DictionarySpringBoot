@@ -9,7 +9,6 @@ import com.example.demo.domain.word.WordModelReturn;
 import com.example.demo.domain.word.WordModelReturnEnriched;
 import com.example.demo.infrastructure.repositories.DbServer;
 import com.example.demo.infrastructure.repositories.WordMapper;
-import com.example.demo.infrastructure.repositories.association.AssociationEntity;
 import com.example.demo.infrastructure.repositories.language.LanguageEntity;
 import io.ebean.ExpressionList;
 import io.ebean.PagedList;
@@ -33,20 +32,12 @@ public class WordRepository {
     private WordMapper mapStructMapper;
 
     public WordModelReturn getByName(String word) {
-        WordEntity wordEntity = dbServer.getDB()
-                .find(WordEntity.class)
-                .where()
-                .eq(WordEntity.WORD, word)
-                .findOne();
+        WordEntity wordEntity = dbServer.getDB().find(WordEntity.class).where().eq(WordEntity.WORD, word).findOne();
         return mapStructMapper.toWordModelReturn(wordEntity);
     }
 
     public WordModelReturn getById(UUID id) {
-        WordEntity wordEntity = dbServer.getDB()
-                .find(WordEntity.class)
-                .where()
-                .eq(WordEntity.ID, id)
-                .findOne();
+        WordEntity wordEntity = dbServer.getDB().find(WordEntity.class).where().eq(WordEntity.ID, id).findOne();
         return mapStructMapper.toWordModelReturn(wordEntity);
     }
 
@@ -76,10 +67,7 @@ public class WordRepository {
     public GeneralResultModel delete(UUID id) {
         GeneralResultModel resultModel;
         try {
-            dbServer.getDB().find(WordEntity.class)
-                    .where()
-                    .eq(WordEntity.ID, id)
-                    .delete();
+            dbServer.getDB().find(WordEntity.class).where().eq(WordEntity.ID, id).delete();
         } catch (Exception e) {
             resultModel = new GeneralResultModel(DATABASE_TRANSACTION_ERROR_CODE, DATABASE_TRANSACTION_ERROR_MESSAGE + e.getMessage());
             return resultModel;
@@ -104,21 +92,11 @@ public class WordRepository {
     }
 
     public List<String> findExist(List<String> name) {
-        return mapStructMapper.toWordModelReturnList(dbServer.getDB()
-                .find(WordEntity.class)
-                .where()
-                .in(WordEntity.WORD, name)
-                .findList()).stream().map(WordModelReturn::getWord).collect(Collectors.toList());
+        return mapStructMapper.toWordModelReturnList(dbServer.getDB().find(WordEntity.class).where().in(WordEntity.WORD, name).findList()).stream().map(WordModelReturn::getWord).collect(Collectors.toList());
     }
 
     public PageResult<WordModelReturn> criteriaQuery(WordCriteriaModel criteriaModel) {
-        PagedList<WordEntity> entityPagedList = createExpression(criteriaModel,
-                dbServer.getDB()
-                        .find(WordEntity.class)
-                        .setFirstRow(criteriaModel.getSize() * (criteriaModel.getPageNumber() - 1))
-                        .setMaxRows(criteriaModel.getSize())
-                        .where())
-                .findPagedList();
+        PagedList<WordEntity> entityPagedList = createExpression(criteriaModel, dbServer.getDB().find(WordEntity.class).setFirstRow(criteriaModel.getSize() * (criteriaModel.getPageNumber() - 1)).setMaxRows(criteriaModel.getSize()).where()).findPagedList();
         return new PageResult<>(mapStructMapper.toWordModelList(entityPagedList.getList()), entityPagedList.getTotalCount());
     }
 
@@ -150,68 +128,34 @@ public class WordRepository {
     }
 
     public WordModelReturnEnriched getByNameEnriched(String word) {
-        WordEntity wordEntity = dbServer.getDB()
-                .find(WordEntity.class)
-                .where()
-                .eq(WordEntity.WORD, word)
-                .findOne();
+        WordEntity wordEntity = dbServer.getDB().find(WordEntity.class).where().eq(WordEntity.WORD, word).findOne();
         LanguageEntity languageEntity = null;
         if (wordEntity != null) {
-            languageEntity = dbServer.getDB()
-                    .find(LanguageEntity.class)
-                    .where()
-                    .eq(LanguageEntity.ID, wordEntity.getLanguageId())
-                    .findOne();
+            languageEntity = dbServer.getDB().find(LanguageEntity.class).where().eq(LanguageEntity.ID, wordEntity.getLanguageId()).findOne();
         }
         return mapStructMapper.toWordModelReturnEnriched(wordEntity, languageEntity);
     }
 
     public WordModelReturnEnriched getByIdEnriched(UUID id) {
-        WordEntity wordEntity = dbServer.getDB()
-                .find(WordEntity.class)
-                .where()
-                .eq(WordEntity.ID, id)
-                .findOne();
+        WordEntity wordEntity = dbServer.getDB().find(WordEntity.class).where().eq(WordEntity.ID, id).findOne();
         LanguageEntity languageEntity = null;
         if (wordEntity != null) {
-            languageEntity = dbServer.getDB()
-                    .find(LanguageEntity.class)
-                    .where()
-                    .eq(LanguageEntity.ID, wordEntity.getLanguageId())
-                    .findOne();
+            languageEntity = dbServer.getDB().find(LanguageEntity.class).where().eq(LanguageEntity.ID, wordEntity.getLanguageId()).findOne();
         }
         return mapStructMapper.toWordModelReturnEnriched(wordEntity, languageEntity);
     }
 
     public boolean isSameLanguage(UUID firstWord, UUID secondWord) {
-        UUID firstLang = dbServer.getDB()
-                .find(WordEntity.class)
-                .select(WordEntity.LANGUAGE)
-                .where()
-                .eq(WordEntity.ID, firstWord)
-                .findSingleAttribute();
-        UUID secondLang = dbServer.getDB()
-                .find(WordEntity.class)
-                .select(WordEntity.LANGUAGE)
-                .where()
-                .eq(WordEntity.ID, secondWord)
-                .findSingleAttribute();
+        UUID firstLang = dbServer.getDB().find(WordEntity.class).select(WordEntity.LANGUAGE).where().eq(WordEntity.ID, firstWord).findSingleAttribute();
+        UUID secondLang = dbServer.getDB().find(WordEntity.class).select(WordEntity.LANGUAGE).where().eq(WordEntity.ID, secondWord).findSingleAttribute();
         return firstLang == secondLang;
     }
 
     public boolean exists(UUID id) {
-        return dbServer.getDB()
-                .find(WordEntity.class)
-                .where()
-                .eq(WordEntity.ID, id)
-                .exists();
+        return dbServer.getDB().find(WordEntity.class).where().eq(WordEntity.ID, id).exists();
     }
 
     public boolean exists(String word) {
-        return dbServer.getDB()
-                .find(WordEntity.class)
-                .where()
-                .eq(WordEntity.WORD, word)
-                .exists();
+        return dbServer.getDB().find(WordEntity.class).where().eq(WordEntity.WORD, word).exists();
     }
 }

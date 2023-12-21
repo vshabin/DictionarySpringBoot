@@ -5,18 +5,23 @@ import com.example.demo.infrastructure.JsonUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.ConstraintViolationException;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.io.IOException;
+import java.util.stream.Collectors;
 
 @ControllerAdvice
 public class ApplicationExceptionHandler {
     static final String VALIDATION_ERROR = "VALIDATION_ERROR";
+    static final String ACCESS_ERROR = "ACCESS_ERROR";
+    static final String NO_ACCESS_TOKEN_ERROR_CODE = "NO_ACCESS_TOKEN_ERROR";
+    static final String NO_ACCESS_TOKEN_ERROR_MESSAGE = "Access token wasn't found";
     static final String UNKNOWN_ERROR = "UNKNOWN_ERROR";
 
     @ExceptionHandler(value = Exception.class)
@@ -42,9 +47,20 @@ public class ApplicationExceptionHandler {
         }
         if (e instanceof ConstraintViolationException) {
             errorCode = VALIDATION_ERROR;
-            ((ConstraintViolationException) e).getConstraintViolations().stream().map(jakarta.validation.ConstraintViolation::getMessage).forEach(errorMessage::concat);
+            errorMessage = ((ConstraintViolationException) e).getConstraintViolations().stream()
+                    .map(jakarta.validation.ConstraintViolation::getMessage)
+                    .collect(Collectors.joining(" "));
             response.setStatus(400);
 
+        }
+        if (e instanceof AccessDeniedException) {
+            errorCode = ACCESS_ERROR;
+            response.setStatus(403);
+        }
+        if(e instanceof AuthenticationCredentialsNotFoundException) {
+            errorCode = NO_ACCESS_TOKEN_ERROR_CODE;
+            errorMessage = NO_ACCESS_TOKEN_ERROR_MESSAGE;
+            response.setStatus(403);
         }
 
         response.setCharacterEncoding("UTF-8");

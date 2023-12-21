@@ -34,6 +34,7 @@ public class AssociationController {
     }
 
     @GetMapping(value = "/searchById/{id}")
+    @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Get a association by id", description = "Returns a association as per the id or an error")
     public AssociationModelReturn getById(@PathVariable @Parameter(name = "association UUID", description = "association id", example = "1e723432-ed5e-420e-9cf8-3a51ff669735") UUID id) {
         return service.getById(id);
@@ -61,20 +62,30 @@ public class AssociationController {
     }
 
     @PostMapping(value = "/criteria")
+    @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Performs searches with filtering results", description = "Returns a list containing the found associations")
     public PageResult<AssociationModelReturn> criteriaQuery(@RequestBody @Valid AssociationCriteriaModel criteriaModel) {
         return service.criteriaQuery(criteriaModel);
     }
 
     @GetMapping(value = "/searchByIdEnriched/{id}")
+    @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Get a association with lettered words and language name by id", description = "Returns a enriched association as per the id or an error")
     public AssociationModelReturnEnriched getByIdEnriched(@PathVariable UUID id) {
         return service.getByIdEnriched(id);
     }
 
     @PostMapping(value = "/translate")
+    @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Translate a word", description = "Returns a list containing the found translations")
     public PageResult<WordModelReturn> translate(@RequestBody @Valid TranslationRequest translationRequest) {
         return service.translate(translationRequest);
+    }
+
+    @GetMapping(value= "/export")
+    @PreAuthorize("isAuthenticated()")
+    @Operation(summary = "Export data", description = "Export data to .xlsx file")
+    public Object export(){
+        return service.export();
     }
 }
