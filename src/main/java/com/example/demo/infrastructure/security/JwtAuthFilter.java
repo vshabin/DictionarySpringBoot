@@ -1,12 +1,10 @@
 package com.example.demo.infrastructure.security;
 
+import com.example.demo.domain.common.GeneralResultModel;
 import com.example.demo.domain.user.UserCredentials;
 import com.example.demo.domainservices.JwtProvider;
-
-import com.example.demo.domainservices.UserService;
-import io.jsonwebtoken.Claims;
+import com.example.demo.infrastructure.JsonUtils;
 import jakarta.servlet.FilterChain;
-import jakarta.servlet.ServletException;
 import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServletRequest;
@@ -17,12 +15,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
-import org.springframework.util.StringUtils;
 import org.springframework.web.filter.GenericFilterBean;
-import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.util.List;
@@ -31,40 +25,51 @@ import java.util.UUID;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class JwtAuthFilter extends OncePerRequestFilter {
+public class JwtAuthFilter extends GenericFilterBean {
     private static final String AUTHORIZATION = "Authorization";
+    private static final String JWT_FILTER_ERROR_CODE = "JWT_FILTER_ERROR_CODE";
+    private static final String JWT_FILTER_ERROR_MESSAGE = "An error occurred in the JWT filter with message: ";
 
     @Autowired
     private JwtProvider jwtProvider;
 
-
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+    public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException {
         try {
-            String authHeader = request.getHeader(AUTHORIZATION);
-            if(authHeader==null){
-                filterChain.doFilter(request, response);
+            String path = ((HttpServletRequest) request).getRequestURI();
+            if ("/auth/login".equals(path)) {
+                chain.doFilter(request, response);
                 return;
             }
-            var token = authHeader.substring(7);
+
+            String authHeader = ((HttpServletRequest) request).getHeader(AUTHORIZATION);
+            if (authHeader == null) {
+                throw new Exception("Missing access token");
+            }
+            var token = authHeader.substring(authHeader.lastIndexOf(' ') + 1);
             var claims = jwtProvider.getAccessClaims(token);
 
             var userCredentials = new UserCredentials();
-            //TODO чек на null
-            userCredentials.setUserId(UUID.fromString(claims.get("userId", String.class)));
-            userCredentials.setSessionId(UUID.fromString(claims.get("sessionId", String.class)));
-            var role = claims.get("role", String.class);
 
+            if (claims.get(SecurityConst.USER_ID_CLAIM, String.class) != null) {
+                userCredentials.setUserId(UUID.fromString(claims.get(SecurityConst.USER_ID_CLAIM, String.class)));
+            }
+            if (claims.get(SecurityConst.SESSION_ID_CLAIM, String.class) != null) {
+                userCredentials.setSessionId(UUID.fromString(claims.get(SecurityConst.SESSION_ID_CLAIM, String.class)));
+            }
+
+            var role = claims.get(SecurityConst.ROLE_CLAIM, String.class);
             var authorities = List.of(new SimpleGrantedAuthority(role));
 
             var authToken = new UsernamePasswordAuthenticationToken(claims.getSubject(), userCredentials, authorities);
-            //authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
             SecurityContextHolder.getContext().setAuthentication(authToken);
 
-            filterChain.doFilter(request, response);
+            chain.doFilter(request, response);
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            response.setStatus(403);
+            ((HttpServletResponse) response).setStatus(403);
+            response.setContentType("application/json");
+            response.getWriter().write(JsonUtils.toJson(new GeneralResultModel(JWT_FILTER_ERROR_CODE, JWT_FILTER_ERROR_MESSAGE + e.getMessage())));
+            response.getWriter().flush();
         }
     }
 }

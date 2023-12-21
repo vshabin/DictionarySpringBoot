@@ -2,6 +2,7 @@ package com.example.demo.api;
 
 import com.example.demo.domain.JWT.JwtRequest;
 import com.example.demo.domain.JWT.JwtResponse;
+import com.example.demo.domain.JWT.RefreshTokenModel;
 import com.example.demo.domain.common.GeneralResultModel;
 import com.example.demo.domainservices.AuthService;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -27,12 +28,12 @@ public class AuthController {
     }
 
     @PostMapping("/refresh")
-    public JwtResponse refresh(@RequestBody String refreshToken) {
+    public JwtResponse refresh(@RequestBody @Valid RefreshTokenModel refreshToken) {
         return service.refresh(refreshToken);
     }
 
     @PostMapping("/logout")
-    public GeneralResultModel logout(@RequestBody String refreshToken) {
+    public GeneralResultModel logout(@RequestBody @Valid RefreshTokenModel refreshToken) {
         return service.logout(refreshToken);
     }
 }

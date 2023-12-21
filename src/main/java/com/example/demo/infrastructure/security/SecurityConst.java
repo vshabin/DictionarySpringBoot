@@ -1,18 +1,18 @@
 package com.example.demo.infrastructure.security;
 
-import lombok.RequiredArgsConstructor;
-
 public class SecurityConst {
     public static final String ROLE_CLAIM = "role";
-    @RequiredArgsConstructor
+    public static final String USER_ID_CLAIM="userId";
+    public static final String SESSION_ID_CLAIM="sessionId";
+
+
     public enum Role {
-        ADMIN("Админ"),
-        USER("Пользователь"),
-        REFRESH_TOKEN("REFRESH_TOKEN"),
+        ADMIN,
+        USER,
+        REFRESH_TOKEN,
 
 
         ;
-        private final String description;
     }
 
 }

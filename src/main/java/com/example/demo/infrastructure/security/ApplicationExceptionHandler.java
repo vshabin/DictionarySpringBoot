@@ -15,7 +15,6 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 import java.io.IOException;
 
 @ControllerAdvice
-@Qualifier("exceptionHandler")
 public class ApplicationExceptionHandler {
     static final String VALIDATION_ERROR = "VALIDATION_ERROR";
     static final String UNKNOWN_ERROR = "UNKNOWN_ERROR";

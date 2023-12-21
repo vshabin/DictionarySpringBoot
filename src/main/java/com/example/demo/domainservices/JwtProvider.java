@@ -1,22 +1,21 @@
 package com.example.demo.domainservices;
 
 
-import com.example.demo.domain.user.Role;
+
+import com.example.demo.infrastructure.security.SecurityConst;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.io.IOException;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
+import com.example.demo.infrastructure.security.SecurityConst.Role;
 
 import javax.crypto.SecretKey;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Date;
-import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 
 @Component
@@ -32,32 +31,30 @@ public class JwtProvider {
         REFRESH_SECRET = Keys.hmacShaKeyFor(Decoders.BASE64.decode(refreshSecret));
     }
 
-    public String generateAccessToken(String login, String fullName,UUID userId, UUID sessionId, Role role) throws IOException {
+    public String generateAccessToken(String login,UUID userId, UUID sessionId, Role role) throws IOException {
         final LocalDateTime now = LocalDateTime.now();
         final Instant accessExpirationInstant = now.plusMinutes(ACCESS_TOKEN_EXPIRE_MINUTES).atZone(ZoneId.systemDefault()).toInstant();
         final Date accessExpiration = Date.from(accessExpirationInstant);
         return Jwts.builder()
-                .setSubject(login)
-                .claim("userId", userId.toString())
-                //.claim("fullName",fullName)
-                .claim("sessionId", sessionId.toString())
-                .setExpiration(accessExpiration)
-                .claim("role", role.toString())
+                .subject(login)
+                .claim(SecurityConst.USER_ID_CLAIM, userId.toString())
+                .claim(SecurityConst.SESSION_ID_CLAIM, sessionId.toString())
+                .expiration(accessExpiration)
+                .claim(SecurityConst.ROLE_CLAIM, role.toString())
                 .signWith(ACCESS_SECRET)
                 .compact();
     }
 
-    public String generateRefreshToken(String login, String fullName, UUID userId, UUID sessionId) {
+    public String generateRefreshToken(String login, UUID userId, UUID sessionId) {
         final LocalDateTime now = LocalDateTime.now();
         final Instant refreshExpirationInstant = now.plusDays(REFRESH_TOKEN_EXPIRE_DAYS).atZone(ZoneId.systemDefault()).toInstant();
         final Date refreshExpiration = Date.from(refreshExpirationInstant);
         return Jwts.builder()
-                .setSubject(login)
-                .claim("userId", userId.toString())
-                //.claim("fullName",fullName)
-                .claim("sessionId", sessionId.toString())
-                .setExpiration(refreshExpiration)
-                .claim("role", Role.REFRESH_TOKEN.toString())
+                .subject(login)
+                .claim(SecurityConst.USER_ID_CLAIM, userId.toString())
+                .claim(SecurityConst.SESSION_ID_CLAIM, sessionId.toString())
+                .expiration(refreshExpiration)
+                .claim(SecurityConst.ROLE_CLAIM, Role.REFRESH_TOKEN.toString())
                 .signWith(REFRESH_SECRET)
                 .compact();
     }
@@ -65,19 +62,16 @@ public class JwtProvider {
     public boolean validateAccessToken(String accessToken) {
         return validateToken(accessToken, ACCESS_SECRET);
     }
-    public boolean validateAccessTokenData(String accessToken, UserDetails userDetails){
-        String username = getClaims(accessToken,ACCESS_SECRET).getSubject();
-        return (username.equals(userDetails.getUsername()) && !isTokenExpired(accessToken,ACCESS_SECRET));
-    }
+
     public boolean validateRefreshToken(String refreshToken) {
         return validateToken(refreshToken, REFRESH_SECRET);
     }
 
-    private boolean validateToken(String token, SecretKey secret) throws ExpiredJwtException, UnsupportedJwtException, MalformedJwtException, SignatureException {
+    private boolean validateToken(String token, SecretKey secret) throws ExpiredJwtException, UnsupportedJwtException, MalformedJwtException {
         Jwts.parser()
-                .setSigningKey(secret)
+                .verifyWith(secret)
                 .build()
-                .parseClaimsJws(token);
+                .parseSignedClaims(token);
         return true;
     }
 
@@ -89,15 +83,11 @@ public class JwtProvider {
         return getClaims(token, REFRESH_SECRET);
     }
 
-    private Claims getClaims(String token, SecretKey secret) {
+    private Claims getClaims(String token, SecretKey secret) throws JwtException, IllegalArgumentException{
         return Jwts.parser()
-                .setSigningKey(secret)
+                .verifyWith(secret)
                 .build()
-                .parseClaimsJws(token)
-                .getBody();
-    }
-
-    private Boolean isTokenExpired(String token,SecretKey key) {
-        return getClaims(token,key).getExpiration().before(new Date());
+                .parseSignedClaims(token)
+                .getPayload();
     }
 }
