@@ -1,8 +1,8 @@
 package com.example.demo.domainservices;
 
 
-import com.example.demo.infrastructure.security.SecurityConst;
-import com.example.demo.infrastructure.security.SecurityConst.Role;
+import com.example.demo.security.SecurityConst;
+import com.example.demo.security.SecurityConst.Role;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.io.IOException;

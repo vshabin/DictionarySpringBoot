@@ -1,4 +1,4 @@
-package com.example.demo.infrastructure.security;
+package com.example.demo.security;
 
 import com.example.demo.domain.common.GeneralResultModel;
 import com.example.demo.infrastructure.JsonUtils;

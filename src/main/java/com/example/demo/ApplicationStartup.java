@@ -1,7 +1,7 @@
 package com.example.demo;
 
 import com.example.demo.infrastructure.repositories.DbServer;
-import com.example.demo.infrastructure.security.UserProvider;
+import com.example.demo.security.UserProvider;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import io.ebean.DatabaseFactory;
@@ -12,17 +12,14 @@ import liquibase.LabelExpression;
 import liquibase.Liquibase;
 import liquibase.database.DatabaseConnection;
 import liquibase.database.jvm.JdbcConnection;
-import liquibase.hub.model.Connection;
 import liquibase.resource.ClassLoaderResourceAccessor;
 import liquibase.resource.ResourceAccessor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
-import org.springframework.core.metrics.StartupStep;
 import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
-import java.sql.DriverManager;
 import java.util.logging.Logger;
 
 @Component

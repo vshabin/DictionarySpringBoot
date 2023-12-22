@@ -1,4 +1,4 @@
-package com.example.demo.infrastructure.security;
+package com.example.demo.security;
 
 public class SecurityConst {
     public static final String ROLE_CLAIM = "role";

@@ -2,7 +2,7 @@ package com.example.demo.domain.user;
 
 import com.example.demo.domain.common.GeneralResultModel;
 import com.example.demo.infrastructure.RoleTypeValidate;
-import com.example.demo.infrastructure.security.SecurityConst.Role;
+import com.example.demo.security.SecurityConst.Role;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;

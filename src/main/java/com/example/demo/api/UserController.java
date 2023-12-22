@@ -8,6 +8,7 @@ import com.example.demo.infrastructure.CommonUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.annotation.security.PermitAll;
 import jakarta.validation.Valid;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.GrantedAuthority;
@@ -40,7 +41,8 @@ public class UserController {
         return service.getByLogin(login);
     }
     @PutMapping(value = "/add")
-    @PreAuthorize("hasAuthority('ADMIN')")
+    //@PreAuthorize("hasAuthority('ADMIN')")
+    @PermitAll
     @Operation(summary = "Add new user", description = "Returns the created object or an error")
     public GuidResultModel add(@Valid @RequestBody UserModelPost model) {
         return service.save(model);

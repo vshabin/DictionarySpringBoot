@@ -6,8 +6,8 @@ import com.example.demo.domain.JWT.RefreshTokenModel;
 import com.example.demo.domain.common.GeneralResultModel;
 import com.example.demo.domain.user.UserModelReturn;
 import com.example.demo.infrastructure.repositories.auth.SessionRepository;
-import com.example.demo.infrastructure.security.SecurityConst;
-import com.example.demo.infrastructure.security.SecurityConst.Role;
+import com.example.demo.security.SecurityConst;
+import com.example.demo.security.SecurityConst.Role;
 import org.springframework.stereotype.Service;
 
 import javax.inject.Inject;

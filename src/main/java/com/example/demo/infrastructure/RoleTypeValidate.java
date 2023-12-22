@@ -1,6 +1,6 @@
 package com.example.demo.infrastructure;
 
-import com.example.demo.infrastructure.security.SecurityConst.Role;
+import com.example.demo.security.SecurityConst.Role;
 import jakarta.validation.Constraint;
 import jakarta.validation.Payload;
 

@@ -9,12 +9,14 @@ import com.example.demo.domainservices.AssociationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.inject.Inject;
+import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
 
@@ -85,7 +87,13 @@ public class AssociationController {
     @GetMapping(value= "/export")
     @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Export data", description = "Export data to .xlsx file")
-    public Object export(){
-        return service.export();
+    public void export(HttpServletResponse response) throws IOException {
+        response.setContentType("application/octet-stream");
+
+        String headerKey = "Content-Disposition";
+        String headerValue = "attachment; filename=export.xlsx";
+        response.setHeader(headerKey, headerValue);
+
+        service.export(response);
     }
 }

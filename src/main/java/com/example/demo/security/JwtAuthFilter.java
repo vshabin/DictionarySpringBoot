@@ -1,4 +1,4 @@
-package com.example.demo.infrastructure.security;
+package com.example.demo.security;
 
 import com.example.demo.domain.JWT.ParsingResult;
 import com.example.demo.domain.common.GeneralResultModel;
@@ -22,7 +22,6 @@ import org.springframework.web.filter.GenericFilterBean;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.Objects;
 import java.util.UUID;
 
 @Component

@@ -1,4 +1,4 @@
-package com.example.demo.infrastructure.security;
+package com.example.demo.security;
 
 import com.example.demo.infrastructure.CommonUtils;
 import io.ebean.config.CurrentUserProvider;

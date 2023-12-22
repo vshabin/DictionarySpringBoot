@@ -219,4 +219,18 @@ public class AssociationRepository {
         PagedList<WordEntity> entityPagedList = dbServer.getDB().find(WordEntity.class).setFirstRow(request.getSize() * (request.getPageNumber() - 1)).setMaxRows(request.getSize()).where().in(WordEntity.ID, translations).eq(WordEntity.LANGUAGE, translationLanguageEntity.getId()).findPagedList();
         return new PageResult<>(wordMapper.toWordModelReturnList(entityPagedList.getList()), entityPagedList.getTotalCount());
     }
+
+    public List<ExcelModel> getExcelModels(int firstRow, int count) {
+//        PagedList<AssociationEntity> entityPagedList = dbServer.getDB()
+//                .find(AssociationEntity.class)
+//                .setFirstRow(firstRow)
+//                .setMaxRows(count)
+//                .findPagedList();
+        return null;
+    }
+    public int getCount(){
+        return dbServer.getDB()
+                .find(AssociationEntity.class)
+                .findCount();
+    }
 }

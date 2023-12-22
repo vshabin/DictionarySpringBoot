@@ -1,4 +1,4 @@
-package com.example.demo.infrastructure.security;
+package com.example.demo.security;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;

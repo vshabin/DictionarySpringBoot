@@ -5,14 +5,20 @@ import com.example.demo.domain.common.GeneralResultModel;
 import com.example.demo.domain.common.GuidResultModel;
 import com.example.demo.domain.common.PageResult;
 import com.example.demo.domain.word.WordModelReturn;
+import com.example.demo.infrastructure.ExcelGenerator;
 import com.example.demo.infrastructure.repositories.association.AssociationRepository;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import javax.inject.Inject;
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.UUID;
+
+import static java.time.LocalDateTime.now;
 
 @Service
 public class AssociationService {
@@ -112,7 +118,14 @@ public class AssociationService {
         return result;
     }
 
-    public Object export() {
-        return null;
+    public void export(HttpServletResponse response) throws IOException {
+        var excel = new ExcelGenerator();
+        List<ExcelModel> modelList;
+        ExcelModel a= new ExcelModel("a","a", "b","b", now(), "a", "a", "a");
+        ExcelModel b= new ExcelModel("b","b", "a","a", now(), "a", "a", "a");
+        ExcelModel c= new ExcelModel("ty","b", "yt","a", now(), "a", "a", "a");
+        modelList = List.of(a,b,c);
+        excel.addData(modelList);
+        excel.generateExcelFile(response);
     }
 }
