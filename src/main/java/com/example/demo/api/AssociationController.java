@@ -85,7 +85,7 @@ public class AssociationController {
     }
 
     @GetMapping(value= "/export")
-    @PreAuthorize("isAuthenticated()")
+    //@PreAuthorize("isAuthenticated()")
     @Operation(summary = "Export data", description = "Export data to .xlsx file")
     public void export(HttpServletResponse response) throws IOException {
         response.setContentType("application/octet-stream");

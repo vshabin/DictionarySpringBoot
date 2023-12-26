@@ -16,6 +16,7 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -23,26 +24,39 @@ import java.util.Map;
 public class ExcelGenerator {
     private final SXSSFWorkbook workbook;
     private Map<String,SXSSFSheet> sheets = new HashMap<>();
+    private CellStyle BOLD_STYLE;
+    private CellStyle DEFAULT_STYLE;
+
+    private final List<String> HEADERS= List.of(
+            "Слово",
+            "Перевод",
+            "Дата добавления",
+            "Кем добавлено (ФИО)",
+            "Кем добавлено (Логин)",
+            "Кем добавлено (Роль)"
+    );
 
     public ExcelGenerator() {
         workbook = new SXSSFWorkbook();
+
+        DEFAULT_STYLE= workbook.createCellStyle();
+        Font font = workbook.createFont();
+        DEFAULT_STYLE.setFont(font);
+
+        BOLD_STYLE = workbook.createCellStyle();
+        Font bold_font = workbook.createFont();
+        bold_font.setBold(true);
+        BOLD_STYLE.setFont(bold_font);
+
     }
     private void writeHeader(SXSSFSheet sheet) {
         Row row = sheet.createRow(0);
-        CellStyle style = workbook.createCellStyle();
-        Font font = workbook.createFont();
-        font.setBold(true);
-        font.setFontHeight((short)16);
-        style.setFont(font);
-        createCell(row, 0, "Слово", style, sheet);
-        createCell(row, 1, "Перевод", style, sheet);
-        createCell(row, 2, "Дата добавления", style, sheet);
-        createCell(row, 3, "Кем добавлено (ФИО)", style, sheet);
-        createCell(row, 4, "Кем добавлено (Логин)", style, sheet);
-        createCell(row, 5, "Кем добавлено (Роль)", style, sheet);
+
+        for(int i=0; i< HEADERS.size();i++){
+            createCell(row,i,HEADERS.get(i),BOLD_STYLE,sheet);
+        }
     }
     private void createCell(Row row, int columnCount, Object valueOfCell, CellStyle style, SXSSFSheet sheet) {
-        //sheet.autoSizeColumn(columnCount,true);
         Cell cell = row.createCell(columnCount);
 
         if(valueOfCell instanceof String) {
@@ -50,35 +64,37 @@ public class ExcelGenerator {
         }
 
         if(valueOfCell instanceof LocalDateTime) {
-            cell.setCellValue((LocalDateTime) valueOfCell);
+            cell.setCellValue(((LocalDateTime) valueOfCell).toString());
         }
-
         cell.setCellStyle(style);
     }
     private void write(SXSSFSheet sheet, ExcelModel model) {
         int rowCount = sheet.getLastRowNum()+1;
-        CellStyle style = workbook.createCellStyle();
-        Font font = workbook.createFont();
-        font.setFontHeight((short)14);
-        style.setFont(font);
+
         Row row = sheet.createRow(rowCount);
 
-        createCell(row, 0, model.getWord(), style, sheet);
-        createCell(row, 1, model.getTranslate(), style, sheet);
-        createCell(row, 2, model.getCreatedAt(), style, sheet);
-        createCell(row, 3, model.getCreatedByFullName(), style, sheet);
-        createCell(row, 4, model.getCreatedByLogin(), style, sheet);
-        createCell(row, 5, model.getCreatedByRole(), style, sheet);
+        createCell(row, 0, model.getWord(), DEFAULT_STYLE, sheet);
+        createCell(row, 1, model.getTranslate(), DEFAULT_STYLE, sheet);
+        createCell(row, 2, model.getCreatedAt(), DEFAULT_STYLE, sheet);
+        createCell(row, 3, model.getCreatedByFullName(), DEFAULT_STYLE, sheet);
+        createCell(row, 4, model.getCreatedByLogin(), DEFAULT_STYLE, sheet);
+        createCell(row, 5, model.getCreatedByRole(), DEFAULT_STYLE, sheet);
     }
-    public void addData(List < ExcelModel > modelList){
+    public void addData(List <ExcelModel> modelList){
         SXSSFSheet sheet;
 
         for(ExcelModel model: modelList) {
-            var dictName = model.getWordLanguage().concat(" - ").concat(model.getTranslateLanguage());
+            var dictName = String.join(" - ", model.getWordLanguage(), model.getTranslateLanguage());
             sheet = sheets.get(dictName);
             if(sheet==null) {
                 sheet = workbook.createSheet(dictName);
+                sheet.trackAllColumnsForAutoSizing();
                 writeHeader(sheet);
+                for(int i=0; i< HEADERS.size(); i++) {
+                    sheet.autoSizeColumn(i);
+                    sheet.setColumnWidth(i, sheet.getColumnWidth(i) + 1280);
+                }
+                sheet.untrackAllColumnsForAutoSizing();
                 sheets.put(dictName, sheet);
             }
             write(sheet,model);

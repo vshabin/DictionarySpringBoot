@@ -9,6 +9,7 @@ import com.example.demo.infrastructure.repositories.AssociationMapper;
 import com.example.demo.infrastructure.repositories.DbServer;
 import com.example.demo.infrastructure.repositories.WordMapper;
 import com.example.demo.infrastructure.repositories.language.LanguageEntity;
+import com.example.demo.infrastructure.repositories.user.UserEntity;
 import com.example.demo.infrastructure.repositories.word.WordEntity;
 import io.ebean.ExpressionList;
 import io.ebean.PagedList;
@@ -221,16 +222,21 @@ public class AssociationRepository {
     }
 
     public List<ExcelModel> getExcelModels(int firstRow, int count) {
-//        PagedList<AssociationEntity> entityPagedList = dbServer.getDB()
-//                .find(AssociationEntity.class)
-//                .setFirstRow(firstRow)
-//                .setMaxRows(count)
-//                .findPagedList();
-        return null;
+        List<ExcelModel> result = new ArrayList<>();
+        PagedList<AssociationEntity> entityPagedList = dbServer.getDB().find(AssociationEntity.class).setFirstRow(firstRow).setMaxRows(count).findPagedList();
+        for (AssociationEntity entity : entityPagedList.getList()) {
+            var word = dbServer.getDB().find(WordEntity.class).where().eq(WordEntity.ID, entity.getWord()).findOne();
+            String language = dbServer.getDB().find(LanguageEntity.class).select(LanguageEntity.NAME).where().eq(LanguageEntity.ID, word.getLanguageId()).findSingleAttribute();
+            var translation = dbServer.getDB().find(WordEntity.class).where().eq(WordEntity.ID, entity.getTranslation()).findOne();
+            String translationLanguage = dbServer.getDB().find(LanguageEntity.class).select(LanguageEntity.NAME).where().eq(LanguageEntity.ID, translation.getLanguageId()).findSingleAttribute();
+            var createdByUser = dbServer.getDB().find(UserEntity.class).where().eq(UserEntity.ID, entity.getCreatedByUserId()).findOne();
+            result.add(new ExcelModel(word.getWord(), language, translation.getWord(), translationLanguage, entity.getCreatedAt(), createdByUser.getFullName(), createdByUser.getLogin(), createdByUser.getRole()));
+
+        }
+        return result;
     }
-    public int getCount(){
-        return dbServer.getDB()
-                .find(AssociationEntity.class)
-                .findCount();
+
+    public int getCount() {
+        return dbServer.getDB().find(AssociationEntity.class).findCount();
     }
 }

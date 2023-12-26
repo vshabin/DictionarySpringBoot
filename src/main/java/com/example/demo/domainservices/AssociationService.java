@@ -120,12 +120,20 @@ public class AssociationService {
 
     public void export(HttpServletResponse response) throws IOException {
         var excel = new ExcelGenerator();
-        List<ExcelModel> modelList;
-        ExcelModel a= new ExcelModel("a","a", "b","b", now(), "a", "a", "a");
-        ExcelModel b= new ExcelModel("b","b", "a","a", now(), "a", "a", "a");
-        ExcelModel c= new ExcelModel("ty","b", "yt","a", now(), "a", "a", "a");
-        modelList = List.of(a,b,c);
-        excel.addData(modelList);
+//        List<ExcelModel> modelList = new ArrayList<>();
+//        modelList.add(new ExcelModel("a","a", "b","b", now(), "a", "a", "a"));
+//        modelList.add(new ExcelModel("b","b", "a","a", now(), "a", "a", "a"));
+//        modelList.add(new ExcelModel("ty","b", "yt","a", now(), "a", "a", "a"));
+//        for(int i=0;i<100_000; i++){
+//            modelList.add(new ExcelModel("a","a", "b","b", now(), "a", "a", "a"));
+//        }
+        int count = repository.getCount();
+        int current = 0;
+        int size=1000;
+        while(current<count){
+            excel.addData(repository.getExcelModels(current,size));
+            current += size;
+        }
         excel.generateExcelFile(response);
     }
 }
