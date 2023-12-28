@@ -1,6 +1,8 @@
 package com.example.demo.domainservices;
 
 import com.example.demo.domain.common.GuidResultModel;
+import com.example.demo.domain.common.PageResult;
+import com.example.demo.domain.user.UserCriteriaModel;
 import com.example.demo.domain.user.UserModelPost;
 import com.example.demo.domain.user.UserModelReturn;
 import com.example.demo.infrastructure.repositories.user.UserRepository;
@@ -8,6 +10,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import javax.inject.Inject;
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -43,5 +46,11 @@ public class UserService {
         return repository.exists(login);
     }
 
+    public List<UserModelReturn> getUserListByIdList(List<UUID> ids){
+        return repository.getUserListByIdList(ids);
+    }
 
+    public List<UserModelReturn> getFilteredList(UserCriteriaModel criteriaModel){
+        return repository.getFilteredList(criteriaModel);
+    }
 }

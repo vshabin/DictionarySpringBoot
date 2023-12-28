@@ -22,6 +22,9 @@ public class AssociationModelReturn extends GeneralResultModel {
     @Schema(name = "Date of creation", example = "2023-12-03 18:59:00.655995 +00:00", required = false, hidden = true)
     private LocalDateTime createdAt;
 
+    @Schema(name = "Date of creation", example = "2023-12-03 18:59:00.655995 +00:00", required = false, hidden = true)
+    private UUID createdByUserId;
+
     public AssociationModelReturn(String errorCode, String errorMessage) {
         super(errorCode, errorMessage);
     }

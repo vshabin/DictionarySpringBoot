@@ -13,6 +13,7 @@ import org.springframework.util.StringUtils;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -129,5 +130,9 @@ public class WordService {
 
     public boolean exists(String word) {
         return repository.exists(word);
+    }
+
+    public List<WordModelReturnEnriched> getListEnrichedByIdList(Collection<UUID> ids){
+        return repository.getListEnrichedByIdList(ids);
     }
 }

@@ -5,20 +5,14 @@ import com.example.demo.domain.common.GeneralResultModel;
 import com.example.demo.domain.common.GuidResultModel;
 import com.example.demo.domain.common.PageResult;
 import com.example.demo.domain.word.WordModelReturn;
-import com.example.demo.infrastructure.ExcelGenerator;
 import com.example.demo.infrastructure.repositories.association.AssociationRepository;
-import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import javax.inject.Inject;
-import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.UUID;
-
-import static java.time.LocalDateTime.now;
 
 @Service
 public class AssociationService {
@@ -84,8 +78,8 @@ public class AssociationService {
         return resultModels;
     }
 
-    public PageResult<AssociationModelReturn> criteriaQuery(AssociationCriteriaModel criteriaModel) {
-        return repository.criteriaQuery(criteriaModel);
+    public PageResult<AssociationModelReturn> getPage(AssociationCriteriaModel criteriaModel) {
+        return repository.getPage(criteriaModel);
     }
 
     public AssociationModelReturnEnriched getByIdEnriched(UUID id) {
@@ -116,24 +110,5 @@ public class AssociationService {
 
         });
         return result;
-    }
-
-    public void export(HttpServletResponse response) throws IOException {
-        var excel = new ExcelGenerator();
-//        List<ExcelModel> modelList = new ArrayList<>();
-//        modelList.add(new ExcelModel("a","a", "b","b", now(), "a", "a", "a"));
-//        modelList.add(new ExcelModel("b","b", "a","a", now(), "a", "a", "a"));
-//        modelList.add(new ExcelModel("ty","b", "yt","a", now(), "a", "a", "a"));
-//        for(int i=0;i<100_000; i++){
-//            modelList.add(new ExcelModel("a","a", "b","b", now(), "a", "a", "a"));
-//        }
-        int count = repository.getCount();
-        int current = 0;
-        int size=1000;
-        while(current<count){
-            excel.addData(repository.getExcelModels(current,size));
-            current += size;
-        }
-        excel.generateExcelFile(response);
     }
 }

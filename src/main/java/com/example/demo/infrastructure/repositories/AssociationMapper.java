@@ -17,6 +17,7 @@ import java.util.UUID;
         componentModel = "spring"
 )
 public interface AssociationMapper {
+    @Mapping(source = "association.createdByUserId", target = "createdByUserId")
     AssociationModelReturn toAssociationModelReturn(AssociationEntity association);
 
     AssociationEntity toAssociationEntity(AssociationModelReturn association);

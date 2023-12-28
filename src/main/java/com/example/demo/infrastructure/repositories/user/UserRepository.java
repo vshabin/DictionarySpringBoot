@@ -1,14 +1,24 @@
 package com.example.demo.infrastructure.repositories.user;
 
 import com.example.demo.domain.common.GuidResultModel;
+import com.example.demo.domain.common.PageResult;
+import com.example.demo.domain.user.UserCriteriaModel;
 import com.example.demo.domain.user.UserModelPost;
 import com.example.demo.domain.user.UserModelReturn;
+import com.example.demo.domain.word.WordCriteriaModel;
+import com.example.demo.domain.word.WordModelReturn;
 import com.example.demo.infrastructure.repositories.DbServer;
 import com.example.demo.infrastructure.repositories.UserMapper;
+import com.example.demo.infrastructure.repositories.language.LanguageEntity;
+import com.example.demo.infrastructure.repositories.word.WordEntity;
+import io.ebean.ExpressionList;
+import io.ebean.PagedList;
 import io.ebean.annotation.Transactional;
+import io.micrometer.common.util.StringUtils;
 import org.springframework.stereotype.Repository;
 
 import javax.inject.Inject;
+import java.util.List;
 import java.util.UUID;
 
 @Repository
@@ -51,5 +61,42 @@ public class UserRepository {
 
     public String getEncodedPassword(String login) {
         return dbServer.getDB().find(UserEntity.class).select(UserEntity.PASSWORD).where().eq(UserEntity.LOGIN, login).findSingleAttribute();
+    }
+
+    public List<UserModelReturn> getUserListByIdList(List<UUID> ids){
+        return mapStructMapper.toUserModelReturnList(dbServer.getDB()
+                .find(UserEntity.class)
+                .where()
+                .in(UserEntity.ID,ids)
+                .findList());
+    }
+
+    public List<UserModelReturn> getFilteredList(UserCriteriaModel criteriaModel) {
+        var entityList = createExpression(criteriaModel,
+                dbServer.getDB()
+                        .find(UserEntity.class)
+                        .where())
+                .findList();
+        return mapStructMapper.toUserModelReturnList(entityList);
+    }
+
+    private ExpressionList<UserEntity> createExpression(UserCriteriaModel criteriaModel, ExpressionList<UserEntity> expr) {
+        if (StringUtils.isNotBlank(criteriaModel.getRoleFilter())) {
+            expr.like(UserEntity.ROLE, escape(criteriaModel.getRoleFilter(), '%'));
+        }
+        if (StringUtils.isNotBlank(criteriaModel.getLoginFilter())) {
+            expr.like(UserEntity.LOGIN, escape(criteriaModel.getLoginFilter(), '%'));
+        }
+        if (StringUtils.isNotBlank(criteriaModel.getFullNameFilter())) {
+            expr.like(UserEntity.FULLNAME, escape(criteriaModel.getFullNameFilter(), '%'));
+        }
+        if (StringUtils.isNotBlank(criteriaModel.getSortFilter())) {
+            expr.orderBy(criteriaModel.getSortFilter());
+        }
+        return expr;
+    }
+
+    private String escape(String string, char esc) {
+        return esc + string + esc;
     }
 }

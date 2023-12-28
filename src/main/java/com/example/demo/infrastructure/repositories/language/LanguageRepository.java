@@ -136,4 +136,12 @@ public class LanguageRepository {
     public boolean exists(String name) {
         return dbServer.getDB().find(LanguageEntity.class).where().eq(LanguageEntity.NAME, name).exists();
     }
+
+    public List<LanguageModelReturn> getListByIdList(List<UUID> ids) {
+        return mapStructMapper.toLanguageModelReturnList(dbServer.getDB()
+                .find(LanguageEntity.class)
+                .where()
+                .in(LanguageEntity.ID,ids)
+                .findList());
+    }
 }

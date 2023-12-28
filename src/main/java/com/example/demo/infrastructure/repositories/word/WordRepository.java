@@ -3,10 +3,12 @@ package com.example.demo.infrastructure.repositories.word;
 import com.example.demo.domain.common.GeneralResultModel;
 import com.example.demo.domain.common.GuidResultModel;
 import com.example.demo.domain.common.PageResult;
+import com.example.demo.domain.language.LanguageModelReturn;
 import com.example.demo.domain.word.WordCriteriaModel;
 import com.example.demo.domain.word.WordModelPost;
 import com.example.demo.domain.word.WordModelReturn;
 import com.example.demo.domain.word.WordModelReturnEnriched;
+import com.example.demo.domainservices.LanguageService;
 import com.example.demo.infrastructure.repositories.DbServer;
 import com.example.demo.infrastructure.repositories.WordMapper;
 import com.example.demo.infrastructure.repositories.language.LanguageEntity;
@@ -18,8 +20,10 @@ import org.springframework.stereotype.Repository;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Repository
@@ -28,6 +32,8 @@ public class WordRepository {
     private final String DATABASE_TRANSACTION_ERROR_MESSAGE = "Ошибка проведения транзакции: ";
     @Inject
     private DbServer dbServer;
+    @Inject
+    private LanguageService languageService;
     @Inject
     private WordMapper mapStructMapper;
 
@@ -129,20 +135,20 @@ public class WordRepository {
 
     public WordModelReturnEnriched getByNameEnriched(String word) {
         WordEntity wordEntity = dbServer.getDB().find(WordEntity.class).where().eq(WordEntity.WORD, word).findOne();
-        LanguageEntity languageEntity = null;
+        LanguageModelReturn languageModel = null;
         if (wordEntity != null) {
-            languageEntity = dbServer.getDB().find(LanguageEntity.class).where().eq(LanguageEntity.ID, wordEntity.getLanguageId()).findOne();
+            languageModel = languageService.getById(wordEntity.getLanguageId());
         }
-        return mapStructMapper.toWordModelReturnEnriched(wordEntity, languageEntity);
+        return mapStructMapper.toWordModelReturnEnriched(wordEntity, languageModel);
     }
 
     public WordModelReturnEnriched getByIdEnriched(UUID id) {
-        WordEntity wordEntity = dbServer.getDB().find(WordEntity.class).where().eq(WordEntity.ID, id).findOne();
-        LanguageEntity languageEntity = null;
+        var wordEntity = dbServer.getDB().find(WordEntity.class).where().eq(WordEntity.ID, id).findOne();
+        LanguageModelReturn languageModel = null;
         if (wordEntity != null) {
-            languageEntity = dbServer.getDB().find(LanguageEntity.class).where().eq(LanguageEntity.ID, wordEntity.getLanguageId()).findOne();
+            languageModel = languageService.getById(wordEntity.getLanguageId());
         }
-        return mapStructMapper.toWordModelReturnEnriched(wordEntity, languageEntity);
+        return mapStructMapper.toWordModelReturnEnriched(wordEntity, languageModel);
     }
 
     public boolean isSameLanguage(UUID firstWord, UUID secondWord) {
@@ -157,5 +163,31 @@ public class WordRepository {
 
     public boolean exists(String word) {
         return dbServer.getDB().find(WordEntity.class).where().eq(WordEntity.WORD, word).exists();
+    }
+
+    public List<WordModelReturnEnriched> getListEnrichedByIdList(Collection<UUID> ids) {
+        var words = dbServer.getDB()
+                .find(WordEntity.class)
+                .where()
+                .in(WordEntity.ID, ids)
+                .findList();
+        var languageIds = words.stream()
+                .map(WordEntity::getLanguageId)
+                .distinct()
+                .collect(Collectors.toList());
+        var languageModels = languageService.getListByIdList(languageIds)
+                .stream()
+                .collect(Collectors.toMap(LanguageModelReturn::getId, Function.identity()));
+        var enrichedWordsList = new ArrayList<WordModelReturnEnriched>();
+        words.forEach(wordEntity->{
+            var wordModel = new WordModelReturnEnriched();
+            wordModel.setId(wordEntity.getId());
+            wordModel.setWord(wordEntity.getWord());
+            wordModel.setLanguageName(languageModels.get(wordEntity.getLanguageId()).getName());
+            wordModel.setLanguageId(wordEntity.getLanguageId());
+            wordModel.setCreatedAt(wordEntity.getCreatedAt());
+            enrichedWordsList.add(wordModel);
+        });
+        return enrichedWordsList;
     }
 }

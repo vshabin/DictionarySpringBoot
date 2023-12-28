@@ -6,6 +6,8 @@ import com.example.demo.infrastructure.repositories.user.UserEntity;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
+import java.util.List;
+
 @Mapper(
         componentModel = "spring"
 )
@@ -19,4 +21,6 @@ public interface UserMapper {
     @Mapping(source = "userEntity.createdAt", target = "createdAt")
     @Mapping(source = "userEntity.archived", target = "archiveDate")
     UserModelReturn toUserModelReturn(UserEntity userEntity);
+
+    List<UserModelReturn> toUserModelReturnList (List<UserEntity> userEntities);
 }

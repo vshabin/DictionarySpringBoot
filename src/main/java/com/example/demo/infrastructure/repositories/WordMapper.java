@@ -1,6 +1,7 @@
 package com.example.demo.infrastructure.repositories;
 
 
+import com.example.demo.domain.language.LanguageModelReturn;
 import com.example.demo.domain.word.WordModelReturn;
 import com.example.demo.domain.word.WordModelPost;
 import com.example.demo.domain.word.WordModelReturnEnriched;
@@ -28,8 +29,9 @@ public interface WordMapper {
 
     List<WordEntity> toWordEntityList(List<WordModelPost> modelAddList);
 
-    @Mapping(source = "languageEntity.name", target = "languageName")
+    @Mapping(source = "languageModelReturn.name", target = "languageName")
     @Mapping(source = "wordEntity.id", target = "id")
     @Mapping(source = "wordEntity.createdAt", target = "createdAt")
-    WordModelReturnEnriched toWordModelReturnEnriched(WordEntity wordEntity, LanguageEntity languageEntity);
+    WordModelReturnEnriched toWordModelReturnEnriched(WordEntity wordEntity, LanguageModelReturn languageModelReturn);
+
 }

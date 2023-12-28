@@ -4,6 +4,7 @@ import com.example.demo.domain.association.*;
 import com.example.demo.domain.common.GeneralResultModel;
 import com.example.demo.domain.common.GuidResultModel;
 import com.example.demo.domain.common.PageResult;
+import com.example.demo.domain.export.AssociationsExportModel;
 import com.example.demo.domain.word.WordModelReturn;
 import com.example.demo.infrastructure.repositories.AssociationMapper;
 import com.example.demo.infrastructure.repositories.DbServer;
@@ -104,7 +105,7 @@ public class AssociationRepository {
 //                .findList()).stream().map(WordModelReturn::getWord).collect(Collectors.toList());
 //    }
 
-    public PageResult<AssociationModelReturn> criteriaQuery(AssociationCriteriaModel criteriaModel) {
+    public PageResult<AssociationModelReturn> getPage(AssociationCriteriaModel criteriaModel) {
         PagedList<AssociationEntity> entityPagedList = createExpression(criteriaModel, dbServer.getDB().find(AssociationEntity.class).setFirstRow(criteriaModel.getSize() * (criteriaModel.getPageNumber() - 1)).setMaxRows(criteriaModel.getSize()).where()).findPagedList();
         return new PageResult<>(mapStructMapper.toAssociationModelList(entityPagedList.getList()), entityPagedList.getTotalCount());
     }
@@ -176,6 +177,9 @@ public class AssociationRepository {
                 expr.or().in(AssociationEntity.WORD, words).in(AssociationEntity.TRANSLATION, words);
             }
         }
+        if(criteriaModel.getCreatedByUUID()!=null){
+            expr.in(AssociationEntity.CREATED_BY_USER_ID,criteriaModel.getCreatedByUUID());
+        }
         if (criteriaModel.getFromFilter() != null) {
             expr.ge(AssociationEntity.CREATED_AT, criteriaModel.getFromFilter());
         }
@@ -221,22 +225,4 @@ public class AssociationRepository {
         return new PageResult<>(wordMapper.toWordModelReturnList(entityPagedList.getList()), entityPagedList.getTotalCount());
     }
 
-    public List<ExcelModel> getExcelModels(int firstRow, int count) {
-        List<ExcelModel> result = new ArrayList<>();
-        PagedList<AssociationEntity> entityPagedList = dbServer.getDB().find(AssociationEntity.class).setFirstRow(firstRow).setMaxRows(count).findPagedList();
-        for (AssociationEntity entity : entityPagedList.getList()) {
-            var word = dbServer.getDB().find(WordEntity.class).where().eq(WordEntity.ID, entity.getWord()).findOne();
-            String language = dbServer.getDB().find(LanguageEntity.class).select(LanguageEntity.NAME).where().eq(LanguageEntity.ID, word.getLanguageId()).findSingleAttribute();
-            var translation = dbServer.getDB().find(WordEntity.class).where().eq(WordEntity.ID, entity.getTranslation()).findOne();
-            String translationLanguage = dbServer.getDB().find(LanguageEntity.class).select(LanguageEntity.NAME).where().eq(LanguageEntity.ID, translation.getLanguageId()).findSingleAttribute();
-            var createdByUser = dbServer.getDB().find(UserEntity.class).where().eq(UserEntity.ID, entity.getCreatedByUserId()).findOne();
-            result.add(new ExcelModel(word.getWord(), language, translation.getWord(), translationLanguage, entity.getCreatedAt(), createdByUser.getFullName(), createdByUser.getLogin(), createdByUser.getRole()));
-
-        }
-        return result;
-    }
-
-    public int getCount() {
-        return dbServer.getDB().find(AssociationEntity.class).findCount();
-    }
 }

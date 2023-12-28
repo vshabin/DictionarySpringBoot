@@ -5,6 +5,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
 import java.time.LocalDateTime;
+import java.util.Collection;
+import java.util.List;
 import java.util.UUID;
 
 @Data
@@ -44,4 +46,7 @@ public class AssociationCriteriaModel extends PageModel {
     private LocalDateTime toFilter;
     @Schema(name = "Field sorting type", example = "name asc,id desc", required = false)
     private String sortFilter;
+
+    @Schema(name = "Filter by user added association", example = "1e723432-ed5e-420e-9cf8-3a51ff669735", required = false)
+    private Collection<UUID> createdByUUID;
 }

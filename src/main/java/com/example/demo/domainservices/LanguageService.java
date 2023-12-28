@@ -113,4 +113,8 @@ public class LanguageService {
     public boolean exists(String name) {
         return repository.exists(name);
     }
+
+    public List<LanguageModelReturn> getListByIdList(List<UUID> ids) {
+        return repository.getListByIdList(ids);
+    }
 }

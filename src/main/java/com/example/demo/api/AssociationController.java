@@ -67,7 +67,7 @@ public class AssociationController {
     @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Performs searches with filtering results", description = "Returns a list containing the found associations")
     public PageResult<AssociationModelReturn> criteriaQuery(@RequestBody @Valid AssociationCriteriaModel criteriaModel) {
-        return service.criteriaQuery(criteriaModel);
+        return service.getPage(criteriaModel);
     }
 
     @GetMapping(value = "/searchByIdEnriched/{id}")
@@ -82,18 +82,5 @@ public class AssociationController {
     @Operation(summary = "Translate a word", description = "Returns a list containing the found translations")
     public PageResult<WordModelReturn> translate(@RequestBody @Valid TranslationRequest translationRequest) {
         return service.translate(translationRequest);
-    }
-
-    @GetMapping(value= "/export")
-    //@PreAuthorize("isAuthenticated()")
-    @Operation(summary = "Export data", description = "Export data to .xlsx file")
-    public void export(HttpServletResponse response) throws IOException {
-        response.setContentType("application/octet-stream");
-
-        String headerKey = "Content-Disposition";
-        String headerValue = "attachment; filename=export.xlsx";
-        response.setHeader(headerKey, headerValue);
-
-        service.export(response);
     }
 }
