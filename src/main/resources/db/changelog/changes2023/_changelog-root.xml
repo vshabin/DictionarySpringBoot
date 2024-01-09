@@ -22,4 +22,5 @@
     <include file="/db/changelog/changes2023/20231219-users-table.xml"/>
     <include file="/db/changelog/changes2023/20231221-all-tables.xml"/>
     <include file="/db/changelog/changes2023/20231222-all-tables.xml"/>
+    <include file="/db/changelog/changes2023/20231229-languages-table.xml"/>
 </databaseChangeLog>

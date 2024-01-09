@@ -1,5 +1,7 @@
 package com.example.demo.infrastructure.repositories.user;
 
+import com.example.demo.domain.association.AssociationCriteriaModel;
+import com.example.demo.domain.association.AssociationModelReturn;
 import com.example.demo.domain.common.GuidResultModel;
 import com.example.demo.domain.common.PageResult;
 import com.example.demo.domain.user.UserCriteriaModel;
@@ -9,6 +11,7 @@ import com.example.demo.domain.word.WordCriteriaModel;
 import com.example.demo.domain.word.WordModelReturn;
 import com.example.demo.infrastructure.repositories.DbServer;
 import com.example.demo.infrastructure.repositories.UserMapper;
+import com.example.demo.infrastructure.repositories.association.AssociationEntity;
 import com.example.demo.infrastructure.repositories.language.LanguageEntity;
 import com.example.demo.infrastructure.repositories.word.WordEntity;
 import io.ebean.ExpressionList;
@@ -80,6 +83,7 @@ public class UserRepository {
         return mapStructMapper.toUserModelReturnList(entityList);
     }
 
+
     private ExpressionList<UserEntity> createExpression(UserCriteriaModel criteriaModel, ExpressionList<UserEntity> expr) {
         if (StringUtils.isNotBlank(criteriaModel.getRoleFilter())) {
             expr.like(UserEntity.ROLE, escape(criteriaModel.getRoleFilter(), '%'));
@@ -98,5 +102,15 @@ public class UserRepository {
 
     private String escape(String string, char esc) {
         return esc + string + esc;
+    }
+
+    public PageResult<UserModelReturn> getPage(UserCriteriaModel userCriteriaModel) {
+        PagedList<UserEntity> entityPagedList = createExpression(userCriteriaModel,
+                dbServer.getDB()
+                        .find(UserEntity.class)
+                        .setFirstRow(userCriteriaModel.getSize() * (userCriteriaModel.getPageNumber() - 1))
+                        .setMaxRows(userCriteriaModel.getSize()).where())
+                .findPagedList();
+        return new PageResult<>(mapStructMapper.toUserModelReturnList(entityPagedList.getList()), entityPagedList.getTotalCount());
     }
 }

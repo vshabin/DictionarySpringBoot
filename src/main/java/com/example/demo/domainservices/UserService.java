@@ -53,4 +53,8 @@ public class UserService {
     public List<UserModelReturn> getFilteredList(UserCriteriaModel criteriaModel){
         return repository.getFilteredList(criteriaModel);
     }
+
+    public PageResult<UserModelReturn> getPage(UserCriteriaModel userCriteriaModel) {
+        return repository.getPage(userCriteriaModel);
+    }
 }

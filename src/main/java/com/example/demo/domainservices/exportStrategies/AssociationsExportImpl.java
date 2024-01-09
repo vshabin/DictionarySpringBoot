@@ -1,4 +1,4 @@
-package com.example.demo.domainservices;
+package com.example.demo.domainservices.exportStrategies;
 
 import com.example.demo.domain.association.AssociationCriteriaModel;
 import com.example.demo.domain.common.PageResult;
@@ -9,14 +9,21 @@ import com.example.demo.domain.export.ExportType;
 import com.example.demo.domain.user.UserCriteriaModel;
 import com.example.demo.domain.user.UserModelReturn;
 import com.example.demo.domain.word.WordModelReturnEnriched;
+import com.example.demo.domainservices.AssociationService;
+import com.example.demo.domainservices.ExportInterface;
+import com.example.demo.domainservices.UserService;
+import com.example.demo.domainservices.WordService;
 import com.example.demo.infrastructure.ExcelUtils;
 import io.micrometer.common.util.StringUtils;
-import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.ss.usermodel.BorderStyle;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.ss.util.RegionUtil;
 import org.apache.poi.xssf.streaming.SXSSFSheet;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
-import org.mapstruct.ap.internal.util.Message;
+import org.springframework.expression.spel.ast.NullLiteral;
 import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
@@ -31,13 +38,15 @@ import java.util.stream.Collectors;
 @Component
 public class AssociationsExportImpl implements ExportInterface {
 
-    private final String TOO_MANY_USERS_FILTERED_ERROR_CODE = "TOO_MANY_USERS_FILTERED_ERROR_CODE";
-    private final String TOO_MANY_USERS_FILTERED_ERROR_MESSAGE = "Слишком много людей было найдено в фильтре";
     private static final String FILE_IS_EMPTY_ERROR_CODE = "FILE_IS_EMPTY_ERROR_CODE";
     private static final String FILE_IS_EMPTY_ERROR_MESSAGE = "Файл результата пуст";
     private static final String NO_USER_PASSED_FILTER_ERROR_CODE = "NO_USER_PASSED_FILTER";
-    private static final String NO_USER_PASSED_FILTER_ERROR_MESSAGE= "Ни один пользователь не прошёл условия фильтра";
+    private static final String NO_USER_PASSED_FILTER_ERROR_MESSAGE = "Ни один пользователь не прошёл условия фильтра";
+    private final String TOO_MANY_USERS_FILTERED_ERROR_CODE = "TOO_MANY_USERS_FILTERED_ERROR_CODE";
+    private final String TOO_MANY_USERS_FILTERED_ERROR_MESSAGE = "Слишком много людей было найдено в фильтре";
 
+    private static final String FILE_NAME="AssociationsExport";
+    private static final String FILE_EXTENSION=".xlsx";
     private final List<String> HEADERS = List.of(
             "Слово",
             "Перевод",
@@ -46,7 +55,8 @@ public class AssociationsExportImpl implements ExportInterface {
             "Кем добавлено (Логин)",
             "Кем добавлено (Роль)"
     );
-    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy_HH-mm");
+    DateTimeFormatter fileNameFormatter = DateTimeFormatter.ofPattern("dd-MM-yyyy_HH-mm");
+    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy HH-mm");
     @Inject
     private UserService userService;
     @Inject
@@ -65,28 +75,28 @@ public class AssociationsExportImpl implements ExportInterface {
         criteriaModel.setPageNumber(1);
         do {
             pageResult = getAssociationsExportModels(criteriaModel);
-            if(pageResult.getErrorCode()!=null){
+            if (pageResult.getErrorCode() != null) {
                 return new ExportReturnModel(pageResult.getErrorCode(), pageResult.getErrorMessage());
             }
-            if(pageResult.getTotalCount()==0){
-                return new ExportReturnModel(FILE_IS_EMPTY_ERROR_CODE,FILE_IS_EMPTY_ERROR_MESSAGE);
+            if (pageResult.getTotalCount() == 0) {
+                return new ExportReturnModel(FILE_IS_EMPTY_ERROR_CODE, FILE_IS_EMPTY_ERROR_MESSAGE);
             }
-            addData(pageResult.getPageContent(), workbook, defaultStyle, boldStyle,sheets);
+            addData(pageResult.getPageContent(), workbook, defaultStyle, boldStyle, sheets);
             criteriaModel.setPageNumber(criteriaModel.getPageNumber() + 1);
         }
         while (pageResult.getPageContent().size() == criteriaModel.getSize());
-        sheets.forEach((key, sheet)->{
-                    CellRangeAddress region = new CellRangeAddress(0, sheet.getLastRowNum(), 0, HEADERS.size()-1);
-                    RegionUtil.setBorderTop(BorderStyle.MEDIUM,region,sheet);
-                    RegionUtil.setBorderBottom(BorderStyle.MEDIUM,region,sheet);
-                    RegionUtil.setBorderLeft(BorderStyle.MEDIUM,region,sheet);
-                    RegionUtil.setBorderRight(BorderStyle.MEDIUM,region,sheet);
+        sheets.forEach((key, sheet) -> {
+                    CellRangeAddress region = new CellRangeAddress(0, sheet.getLastRowNum(), 0, HEADERS.size() - 1);
+                    RegionUtil.setBorderTop(BorderStyle.MEDIUM, region, sheet);
+                    RegionUtil.setBorderBottom(BorderStyle.MEDIUM, region, sheet);
+                    RegionUtil.setBorderLeft(BorderStyle.MEDIUM, region, sheet);
+                    RegionUtil.setBorderRight(BorderStyle.MEDIUM, region, sheet);
                 }
         );
-        try (ByteArrayOutputStream baos = new ByteArrayOutputStream()){
+        try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
             workbook.write(baos);
             workbook.close();
-            return new ExportReturnModel("AssociationsExport_"+LocalDateTime.now().format(formatter), ".xlsx", baos.toByteArray());
+            return new ExportReturnModel(String.join("_", FILE_NAME ,LocalDateTime.now().format(fileNameFormatter)), FILE_EXTENSION, baos.toByteArray());
         }
     }
 
@@ -96,22 +106,23 @@ public class AssociationsExportImpl implements ExportInterface {
     }
 
     private PageResult<AssociationsExportModel> getAssociationsExportModels(ExportCriteriaModel criteriaModel) {
+
         var userCriteriaModel = new UserCriteriaModel();
-        if (StringUtils.isNotBlank(criteriaModel.getAddByRoleFilter())) {
-            userCriteriaModel.setRoleFilter(criteriaModel.getAddByRoleFilter());
+        if (StringUtils.isNotBlank(criteriaModel.getByRoleFilter())) {
+            userCriteriaModel.setRoleFilter(criteriaModel.getByRoleFilter());
         }
-        if (StringUtils.isNotBlank(criteriaModel.getAddByLoginFilter())) {
-            userCriteriaModel.setLoginFilter(criteriaModel.getAddByLoginFilter());
+        if (StringUtils.isNotBlank(criteriaModel.getByLoginFilter())) {
+            userCriteriaModel.setLoginFilter(criteriaModel.getByLoginFilter());
         }
-        if (StringUtils.isNotBlank(criteriaModel.getAddByFullNameFilter())) {
-            userCriteriaModel.setFullNameFilter(criteriaModel.getAddByFullNameFilter());
+        if (StringUtils.isNotBlank(criteriaModel.getByFullNameFilter())) {
+            userCriteriaModel.setFullNameFilter(criteriaModel.getByFullNameFilter());
         }
         var usersList = userService.getFilteredList(userCriteriaModel);
 
         if (usersList.size() > 1000) {
             return new PageResult<>(TOO_MANY_USERS_FILTERED_ERROR_CODE, TOO_MANY_USERS_FILTERED_ERROR_MESSAGE);
         }
-        if(usersList.isEmpty()){
+        if (usersList.isEmpty()) {
             return new PageResult<>(NO_USER_PASSED_FILTER_ERROR_CODE, NO_USER_PASSED_FILTER_ERROR_MESSAGE);
         }
         var usersMap = usersList.stream()
@@ -131,6 +142,10 @@ public class AssociationsExportImpl implements ExportInterface {
 
         var associationPage = associationService.getPage(associationCriteriaModel);
 
+        if(associationPage.getPageContent().isEmpty()){
+            return null;
+        }
+
         Set<UUID> wordIdsList = new HashSet<>();
         for (var associationModelReturn : associationPage.getPageContent()) {
             wordIdsList.add(associationModelReturn.getWord());
@@ -138,19 +153,21 @@ public class AssociationsExportImpl implements ExportInterface {
         }
 
 
-        var wordEnrichedList = wordService.getListEnrichedByIdList(wordIdsList);
-
+        var wordEnrichedList = wordService.getListEnrichedByIds(wordIdsList);
+        if(wordEnrichedList.isEmpty()){
+            return null;
+        }
         var wordMap = wordEnrichedList.stream()
                 .collect(Collectors.toMap(WordModelReturnEnriched::getId, Function.identity()));
 
         List<AssociationsExportModel> pageContent = new ArrayList<>();
         associationPage.getPageContent().forEach(association ->
-                    pageContent.add(new AssociationsExportModel(
-                            wordMap.get(association.getWord()),
-                            wordMap.get(association.getTranslation()),
-                            association.getCreatedAt(),
-                            usersMap.get(association.getCreatedByUserId())
-                    ))
+                pageContent.add(new AssociationsExportModel(
+                        wordMap.get(association.getWord()),
+                        wordMap.get(association.getTranslation()),
+                        association.getCreatedAt(),
+                        usersMap.get(association.getCreatedByUserId())
+                ))
         );
         return new PageResult<>(pageContent, associationPage.getTotalCount());
     }
@@ -161,8 +178,8 @@ public class AssociationsExportImpl implements ExportInterface {
         for (int i = 0; i < HEADERS.size(); i++) {
             createCell(row, i, HEADERS.get(i), style);
         }
-        CellRangeAddress region = new CellRangeAddress(0, 0, 0, HEADERS.size()-1);
-        RegionUtil.setBorderBottom(BorderStyle.MEDIUM,region,sheet);
+        CellRangeAddress region = new CellRangeAddress(0, 0, 0, HEADERS.size() - 1);
+        RegionUtil.setBorderBottom(BorderStyle.MEDIUM, region, sheet);
     }
 
     private void createCell(Row row, int columnCount, String valueOfCell, CellStyle style) {
@@ -176,18 +193,12 @@ public class AssociationsExportImpl implements ExportInterface {
 
         Row row = sheet.createRow(rowCount);
         var cellNum = 0;
-        if(model.getWord()!=null){
-            createCell(row, cellNum++, model.getWord().getWord(), style);
-        }
-        if(model.getTranslation()!=null){
-            createCell(row, cellNum++, model.getTranslation().getWord(), style);
-        }
+        createCell(row, cellNum++, model.getWord() != null ? model.getWord().getWord() : null, style);
+        createCell(row, cellNum++, model.getTranslation() != null ? model.getTranslation().getWord() : null, style);
         createCell(row, cellNum++, model.getCreatedAt() != null ? model.getCreatedAt().format(formatter) : null, style);
-        if(model.getUser()!=null){
-            createCell(row, cellNum++, model.getUser().getFullName(), style);
-            createCell(row, cellNum++, model.getUser().getLogin(), style);
-            createCell(row, cellNum++, model.getUser().getRole().name(), style);
-        }
+        createCell(row, cellNum++, model.getUser() != null ? model.getUser().getFullName() : null, style);
+        createCell(row, cellNum++, model.getUser().getLogin(), style);
+        createCell(row, cellNum++, model.getUser() != null ? model.getUser().getRole().name() : null, style);
 
     }
 
@@ -195,7 +206,7 @@ public class AssociationsExportImpl implements ExportInterface {
                          SXSSFWorkbook workbook,
                          CellStyle defaultStyle,
                          CellStyle boldStyle,
-                         Map<String,SXSSFSheet> sheets) {
+                         Map<String, SXSSFSheet> sheets) {
         SXSSFSheet sheet;
 
         for (AssociationsExportModel model : modelList) {

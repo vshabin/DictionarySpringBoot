@@ -1,18 +1,15 @@
 package com.example.demo.infrastructure.repositories.language;
 
-import io.ebean.annotation.DbDefault;
 import io.ebean.annotation.WhenCreated;
 import io.ebean.annotation.WhoCreated;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
-import lombok.Getter;
-import lombok.Setter;
-import org.springframework.data.annotation.CreatedBy;
 
-import javax.persistence.*;
-import java.time.LocalDate;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.Table;
 import java.time.LocalDateTime;
-import java.util.Date;
 import java.util.UUID;
 
 @Entity
@@ -23,6 +20,7 @@ public class LanguageEntity {
     public static final String NAME = "name";
     public static final String CREATED_AT = "created_at";
     public static final String CREATED_BY_USER_ID = "created_by_user_id";
+    public static final String REG_EX = "reg_ex";
 
     @Id
     @Column(name = ID)
@@ -36,8 +34,11 @@ public class LanguageEntity {
     @WhenCreated
     private LocalDateTime createdAt;
 
-    @Column(name=CREATED_BY_USER_ID)
+    @Column(name = CREATED_BY_USER_ID)
     @WhoCreated
     private UUID createdByUserId;
+
+    @Column(name = REG_EX)
+    private String regEx;
 }
 

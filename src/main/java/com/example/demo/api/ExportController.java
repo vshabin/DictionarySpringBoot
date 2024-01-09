@@ -27,7 +27,7 @@ public class ExportController {
     @Inject
     private ExportService service;
 
-    @PostMapping(value = "/associations")
+    @PostMapping()
     //@PreAuthorize("isAuthenticated()")
     @Operation(summary = "Export data", description = "Export data to .xlsx file")
     public ResponseEntity<?> export(@Valid @RequestBody ExportCriteriaModel criteriaModel) throws IOException {

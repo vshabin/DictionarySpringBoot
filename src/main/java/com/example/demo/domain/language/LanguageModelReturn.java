@@ -28,6 +28,9 @@ public class LanguageModelReturn extends GeneralResultModel {
     @Schema(name = "Date of creation", example = "2023-12-03 18:59:00.655995 +00:00", required = false, hidden = true)
     private LocalDateTime createdAt;
 
+    @NotBlank(message = "Language reg ex should be not empty")
+    private String regEx;
+
     public LanguageModelReturn(String errorCode, String errorMessage) {
         super(errorCode, errorMessage);
     }

@@ -125,8 +125,11 @@ public class LanguageRepository {
         return esc + string + esc;
     }
 
-    public List<UUID> findExistById(List<UUID> languageIds) {
-        return mapStructMapper.toLanguageModelReturnList(dbServer.getDB().find(LanguageEntity.class).where().in(LanguageEntity.ID, languageIds).findList()).stream().map(LanguageModelReturn::getId).collect(Collectors.toList());
+    public List<LanguageModelReturn> findExistById(List<UUID> languageIds) {
+        return mapStructMapper.toLanguageModelReturnList(
+                dbServer.getDB()
+                        .find(LanguageEntity.class)
+                        .where().in(LanguageEntity.ID, languageIds).findList());
     }
 
     public boolean exists(UUID id) {

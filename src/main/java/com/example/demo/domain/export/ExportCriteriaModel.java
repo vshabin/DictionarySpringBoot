@@ -1,7 +1,6 @@
 package com.example.demo.domain.export;
 
 import com.example.demo.domain.common.PageModel;
-import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -13,7 +12,7 @@ public class ExportCriteriaModel extends PageModel {
     private LocalDateTime fromFilter;
     private LocalDateTime toFilter;
 
-    private String addByLoginFilter;
-    private String addByRoleFilter;
-    private String addByFullNameFilter;
+    private String byLoginFilter;
+    private String byRoleFilter;
+    private String byFullNameFilter;
 }

@@ -165,29 +165,12 @@ public class WordRepository {
         return dbServer.getDB().find(WordEntity.class).where().eq(WordEntity.WORD, word).exists();
     }
 
-    public List<WordModelReturnEnriched> getListEnrichedByIdList(Collection<UUID> ids) {
+    public List<WordModelReturn> getListEnrichedByIdList(Collection<UUID> ids) {
         var words = dbServer.getDB()
                 .find(WordEntity.class)
                 .where()
                 .in(WordEntity.ID, ids)
                 .findList();
-        var languageIds = words.stream()
-                .map(WordEntity::getLanguageId)
-                .distinct()
-                .collect(Collectors.toList());
-        var languageModels = languageService.getListByIdList(languageIds)
-                .stream()
-                .collect(Collectors.toMap(LanguageModelReturn::getId, Function.identity()));
-        var enrichedWordsList = new ArrayList<WordModelReturnEnriched>();
-        words.forEach(wordEntity->{
-            var wordModel = new WordModelReturnEnriched();
-            wordModel.setId(wordEntity.getId());
-            wordModel.setWord(wordEntity.getWord());
-            wordModel.setLanguageName(languageModels.get(wordEntity.getLanguageId()).getName());
-            wordModel.setLanguageId(wordEntity.getLanguageId());
-            wordModel.setCreatedAt(wordEntity.getCreatedAt());
-            enrichedWordsList.add(wordModel);
-        });
-        return enrichedWordsList;
+        return mapStructMapper.toWordModelReturnList(words);
     }
 }

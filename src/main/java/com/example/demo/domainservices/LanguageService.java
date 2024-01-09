@@ -102,7 +102,7 @@ public class LanguageService {
         return pageResult;
     }
 
-    public List<UUID> findExist(List<UUID> languageIds) {
+    public List<LanguageModelReturn> findExist(List<UUID> languageIds) {
         return repository.findExistById(languageIds);
     }
 

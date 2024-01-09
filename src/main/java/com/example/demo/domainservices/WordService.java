@@ -3,10 +3,13 @@ package com.example.demo.domainservices;
 import com.example.demo.domain.common.GeneralResultModel;
 import com.example.demo.domain.common.GuidResultModel;
 import com.example.demo.domain.common.PageResult;
+import com.example.demo.domain.language.LanguageModelReturn;
+import com.example.demo.domain.user.UserModelReturn;
 import com.example.demo.domain.word.WordCriteriaModel;
 import com.example.demo.domain.word.WordModelPost;
 import com.example.demo.domain.word.WordModelReturn;
 import com.example.demo.domain.word.WordModelReturnEnriched;
+import com.example.demo.infrastructure.repositories.word.WordEntity;
 import com.example.demo.infrastructure.repositories.word.WordRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -16,6 +19,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
@@ -26,6 +30,9 @@ public class WordService {
     private static final String WORD_ALREADY_EXIST_ERROR_MESSAGE = "Такое слово уже существует в словаре: ";
     private static final String WORD_ID_NOT_EXIST_ERROR_CODE = "WORD_ID_NOT_EXIST_ERROR";
     private static final String WORD_ID_NOT_EXIST_ERROR_MESSAGE = "Слово с таким id не существует: ";
+    private static final String INCORRECT_WORD_ERROR_CODE= "INCORRECT_WORD_ERROR_CODE";
+    private static final String INCORRECT_WORD_ERROR_MESSAGE= "Ваше слово не удовлетворяет требование языка";
+
 
     @Inject
     private WordRepository repository;
@@ -51,12 +58,17 @@ public class WordService {
 
     public GuidResultModel save(WordModelPost model) {
         model.setWord(model.getWord().toLowerCase().trim());
-        if (languageService.getById(model.getLanguageId()) == null) {
+        var language = languageService.getById(model.getLanguageId());
+        if (language == null) {
             return new GuidResultModel(UNEXPECTED_LANGUAGE_ID_ERROR_CODE, UNEXPECTED_LANGUAGE_ID_ERROR_MESSAGE + model.getLanguageId());
         }
         WordModelReturn word = repository.getByName(model.getWord());
         if (word != null && word.getLanguageId().equals(model.getLanguageId())) {
             return new GuidResultModel(WORD_ALREADY_EXIST_ERROR_CODE, WORD_ALREADY_EXIST_ERROR_MESSAGE + (word.getId()));
+        }
+        //TODO не работает, не понятно, почему
+        if(!model.getWord().matches(language.getRegEx())){
+            return new GuidResultModel(INCORRECT_WORD_ERROR_CODE,INCORRECT_WORD_ERROR_MESSAGE);
         }
         return repository.save(model);
     }
@@ -83,12 +95,14 @@ public class WordService {
         var resultModels = new ArrayList<WordModelReturn>();
         var modelsToSave = new ArrayList<WordModelPost>();
         var existList = repository.findExist(modelAddList.stream().map(WordModelPost::getWord).collect(Collectors.toList()));
-        var existLanguageList = languageService.findExist(modelAddList.stream().map(WordModelPost::getLanguageId).collect(Collectors.toList()));
+        var existLanguageMap = languageService.findExist(modelAddList.stream().map(WordModelPost::getLanguageId).collect(Collectors.toList())).stream().collect(Collectors.toMap(LanguageModelReturn::getId, Function.identity()));
         modelAddList.forEach(model -> {
             if (existList.contains(model.getWord())) {
                 resultModels.add(new WordModelReturn(WORD_ALREADY_EXIST_ERROR_CODE, WORD_ALREADY_EXIST_ERROR_MESSAGE + StringUtils.capitalize(model.getWord())));
-            } else if (!existLanguageList.contains(model.getLanguageId())) {
+            } else if (!existLanguageMap.containsKey(model.getLanguageId())) {
                 resultModels.add(new WordModelReturn(UNEXPECTED_LANGUAGE_ID_ERROR_CODE, UNEXPECTED_LANGUAGE_ID_ERROR_MESSAGE + model.getLanguageId()));
+            } else if(!model.getWord().matches(existLanguageMap.get(model.getLanguageId()).getRegEx())){
+                resultModels.add( new WordModelReturn(INCORRECT_WORD_ERROR_CODE,INCORRECT_WORD_ERROR_MESSAGE));
             } else {
                 modelsToSave.add(model);
             }
@@ -132,7 +146,25 @@ public class WordService {
         return repository.exists(word);
     }
 
-    public List<WordModelReturnEnriched> getListEnrichedByIdList(Collection<UUID> ids){
-        return repository.getListEnrichedByIdList(ids);
+    public List<WordModelReturnEnriched> getListEnrichedByIds(Collection<UUID> ids){
+        var words= repository.getListEnrichedByIdList(ids);
+        var languageIds = words.stream()
+                .map(WordModelReturn::getLanguageId)
+                .distinct()
+                .collect(Collectors.toList());
+        var languageModels = languageService.getListByIdList(languageIds)
+                .stream()
+                .collect(Collectors.toMap(LanguageModelReturn::getId, Function.identity()));
+        var enrichedWordsList = new ArrayList<WordModelReturnEnriched>();
+        words.forEach(wordEntity->{
+            var wordModel = new WordModelReturnEnriched();
+            wordModel.setId(wordEntity.getId());
+            wordModel.setWord(wordEntity.getWord());
+            wordModel.setLanguageName(languageModels.get(wordEntity.getLanguageId()).getName());
+            wordModel.setLanguageId(wordEntity.getLanguageId());
+            wordModel.setCreatedAt(wordEntity.getCreatedAt());
+            enrichedWordsList.add(wordModel);
+        });
+        return enrichedWordsList;
     }
 }
