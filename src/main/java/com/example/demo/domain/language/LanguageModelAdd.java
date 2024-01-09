@@ -12,6 +12,7 @@ public class LanguageModelAdd extends GeneralResultModel {
     @NotBlank(message = "Name should be not empty")
     private String name;
 
+    @Schema(name = "Language regex", example = "[а-яА-Я]+", required = true)
     @NotBlank(message = "Language reg ex should be not empty")
     private String regEx;
 }

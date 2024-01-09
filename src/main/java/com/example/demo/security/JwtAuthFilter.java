@@ -30,7 +30,7 @@ import java.util.UUID;
 public class JwtAuthFilter extends GenericFilterBean {
     private static final String AUTHORIZATION = "Authorization";
     private static final String JWT_FILTER_ERROR_CODE = "JWT_FILTER_ERROR_CODE";
-    private static final String JWT_FILTER_ERROR_MESSAGE = "An error occurred in the JWT filter with message: ";
+    private static final String JWT_FILTER_ERROR_MESSAGE = "An error occurred in the JWT filter";
 
     @Autowired
     private JwtProvider jwtProvider;

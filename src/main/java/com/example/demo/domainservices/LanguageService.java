@@ -117,4 +117,5 @@ public class LanguageService {
     public List<LanguageModelReturn> getListByIdList(List<UUID> ids) {
         return repository.getListByIdList(ids);
     }
+
 }

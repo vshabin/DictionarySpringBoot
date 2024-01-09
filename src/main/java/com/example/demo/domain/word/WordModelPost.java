@@ -3,11 +3,13 @@ package com.example.demo.domain.word;
 import com.example.demo.domain.common.GeneralResultModel;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 
 import java.util.UUID;
 
 @Data
+@AllArgsConstructor
 public class WordModelPost extends GeneralResultModel {
     @Schema(name = "Word", example = "Собака", required = true)
     @NotBlank(message = "Name should be not empty")

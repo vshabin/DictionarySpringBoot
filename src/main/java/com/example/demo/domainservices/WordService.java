@@ -66,7 +66,6 @@ public class WordService {
         if (word != null && word.getLanguageId().equals(model.getLanguageId())) {
             return new GuidResultModel(WORD_ALREADY_EXIST_ERROR_CODE, WORD_ALREADY_EXIST_ERROR_MESSAGE + (word.getId()));
         }
-        //TODO не работает, не понятно, почему
         if(!model.getWord().matches(language.getRegEx())){
             return new GuidResultModel(INCORRECT_WORD_ERROR_CODE,INCORRECT_WORD_ERROR_MESSAGE);
         }

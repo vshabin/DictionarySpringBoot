@@ -30,6 +30,6 @@ public class ImportService {
         if (strategy == null) {
             return new ImportReturnModel(NO_SUCH_STRATEGY_ERROR_CODE,NO_SUCH_STRATEGY_ERROR_MESSAGE);
         }
-        return strategies.get(type).readFile(file);
+        return strategy.readFile(file);
     }
 }

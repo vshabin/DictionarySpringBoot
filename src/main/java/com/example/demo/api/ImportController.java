@@ -8,6 +8,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -26,7 +27,7 @@ public class ImportController {
     private ImportService service;
 
     @PostMapping(value = "/dictionary")
-    //@PreAuthorize("isAuthenticated()")
+    @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Import dictionary", description = "Upload data from .xlsx file")
     public ResponseEntity<?> importFile (@RequestBody MultipartFile file) throws IOException {
         var importReturnModel = service.readFile(ImportType.DICTIONARY_IMPORT, file);
