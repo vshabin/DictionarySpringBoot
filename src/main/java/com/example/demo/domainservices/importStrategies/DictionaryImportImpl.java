@@ -95,18 +95,17 @@ public class DictionaryImportImpl implements ImportInterface {
             var wordLanguage = row.getCell(1).getStringCellValue().toLowerCase().trim();
             var translationLanguage = row.getCell(3).getStringCellValue().toLowerCase().trim();
 
-            if (!languageService.exists(wordLanguage)) {
+            var wordLanguageModel = languageService.getByName(wordLanguage);
+            var translationLanguageModel = languageService.getByName(translationLanguage);
+
+            if (wordLanguageModel == null) {
                 writeError(outputSheet, row, defaultStyle, errorStyle, 1, LANGUAGE_DOESNT_EXIST_ERROR);
                 continue;
             }
-
-            if (!languageService.exists(translationLanguage)) {
+            if (translationLanguageModel == null) {
                 writeError(outputSheet, row, defaultStyle, errorStyle, 3, LANGUAGE_DOESNT_EXIST_ERROR);
                 continue;
             }
-
-            var wordLanguageModel = languageService.getByName(wordLanguage);
-            var translationLanguageModel = languageService.getByName(translationLanguage);
 
             var word = row.getCell(0).getStringCellValue().toLowerCase().trim();
             var translation = row.getCell(2).getStringCellValue().toLowerCase().trim();

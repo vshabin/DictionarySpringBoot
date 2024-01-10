@@ -75,22 +75,22 @@ public class AssociationsExportImpl implements ExportInterface {
         criteriaModel.setPageNumber(1);
         do {
             pageResult = getAssociationsExportModels(criteriaModel);
-            if (pageResult.getErrorCode() != null) {
-                return new ExportReturnModel(pageResult.getErrorCode(), pageResult.getErrorMessage());
+            if(pageResult == null){
+                break;
             }
             if (pageResult.getTotalCount() == 0) {
                 return new ExportReturnModel(FILE_IS_EMPTY_ERROR_CODE, FILE_IS_EMPTY_ERROR_MESSAGE);
+            }
+            if (pageResult.getErrorCode() != null) {
+                return new ExportReturnModel(pageResult.getErrorCode(), pageResult.getErrorMessage());
             }
             addData(pageResult.getPageContent(), workbook, defaultStyle, boldStyle, sheets);
             criteriaModel.setPageNumber(criteriaModel.getPageNumber() + 1);
         }
         while (pageResult.getPageContent().size() == criteriaModel.getSize());
         sheets.forEach((key, sheet) -> {
-                    CellRangeAddress region = new CellRangeAddress(0, sheet.getLastRowNum(), 0, HEADERS.size() - 1);
-                    RegionUtil.setBorderTop(BorderStyle.MEDIUM, region, sheet);
+                    CellRangeAddress region = new CellRangeAddress(sheet.getLastRowNum()-1, sheet.getLastRowNum(), 0, HEADERS.size() - 1);
                     RegionUtil.setBorderBottom(BorderStyle.MEDIUM, region, sheet);
-                    RegionUtil.setBorderLeft(BorderStyle.MEDIUM, region, sheet);
-                    RegionUtil.setBorderRight(BorderStyle.MEDIUM, region, sheet);
                 }
         );
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
@@ -199,7 +199,9 @@ public class AssociationsExportImpl implements ExportInterface {
         createCell(row, cellNum++, model.getUser() != null ? model.getUser().getFullName() : null, style);
         createCell(row, cellNum++, model.getUser().getLogin(), style);
         createCell(row, cellNum++, model.getUser() != null ? model.getUser().getRole().name() : null, style);
-
+        CellRangeAddress region = new CellRangeAddress(sheet.getLastRowNum()-1, sheet.getLastRowNum(), 0, HEADERS.size() - 1);
+        RegionUtil.setBorderLeft(BorderStyle.MEDIUM, region, sheet);
+        RegionUtil.setBorderRight(BorderStyle.MEDIUM, region, sheet);
     }
 
     private void addData(List<AssociationsExportModel> modelList,
