@@ -10,7 +10,6 @@ import com.example.demo.domain.user.UserCriteriaModel;
 import com.example.demo.domain.user.UserModelReturn;
 import com.example.demo.domain.word.WordModelReturnEnriched;
 import com.example.demo.domainservices.AssociationService;
-import com.example.demo.domainservices.ExportInterface;
 import com.example.demo.domainservices.UserService;
 import com.example.demo.domainservices.WordService;
 import com.example.demo.infrastructure.ExcelUtils;
@@ -23,7 +22,6 @@ import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.ss.util.RegionUtil;
 import org.apache.poi.xssf.streaming.SXSSFSheet;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
-import org.springframework.expression.spel.ast.NullLiteral;
 import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;

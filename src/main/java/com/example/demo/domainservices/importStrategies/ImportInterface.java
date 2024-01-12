@@ -1,4 +1,4 @@
-package com.example.demo.domainservices;
+package com.example.demo.domainservices.importStrategies;
 
 import com.example.demo.domain.fileImport.ImportReturnModel;
 import com.example.demo.domain.fileImport.ImportType;

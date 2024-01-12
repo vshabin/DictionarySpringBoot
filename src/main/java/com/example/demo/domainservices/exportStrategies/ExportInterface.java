@@ -1,12 +1,10 @@
-package com.example.demo.domainservices;
+package com.example.demo.domainservices.exportStrategies;
 
 import com.example.demo.domain.export.ExportCriteriaModel;
 import com.example.demo.domain.export.ExportReturnModel;
 import com.example.demo.domain.export.ExportType;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.io.OutputStream;
 
 public interface ExportInterface {
     ExportReturnModel getFile(ExportCriteriaModel criteriaModel) throws IOException;

@@ -1,19 +1,12 @@
 package com.example.demo.infrastructure.repositories.user;
 
-import com.example.demo.domain.association.AssociationCriteriaModel;
-import com.example.demo.domain.association.AssociationModelReturn;
 import com.example.demo.domain.common.GuidResultModel;
 import com.example.demo.domain.common.PageResult;
 import com.example.demo.domain.user.UserCriteriaModel;
 import com.example.demo.domain.user.UserModelPost;
 import com.example.demo.domain.user.UserModelReturn;
-import com.example.demo.domain.word.WordCriteriaModel;
-import com.example.demo.domain.word.WordModelReturn;
 import com.example.demo.infrastructure.repositories.DbServer;
 import com.example.demo.infrastructure.repositories.UserMapper;
-import com.example.demo.infrastructure.repositories.association.AssociationEntity;
-import com.example.demo.infrastructure.repositories.language.LanguageEntity;
-import com.example.demo.infrastructure.repositories.word.WordEntity;
 import io.ebean.ExpressionList;
 import io.ebean.PagedList;
 import io.ebean.annotation.Transactional;
@@ -92,7 +85,7 @@ public class UserRepository {
             expr.like(UserEntity.LOGIN, escape(criteriaModel.getLoginFilter(), '%'));
         }
         if (StringUtils.isNotBlank(criteriaModel.getFullNameFilter())) {
-            expr.like(UserEntity.FULLNAME, escape(criteriaModel.getFullNameFilter(), '%'));
+            expr.like(UserEntity.FULL_NAME, escape(criteriaModel.getFullNameFilter(), '%'));
         }
         if (StringUtils.isNotBlank(criteriaModel.getSortFilter())) {
             expr.orderBy(criteriaModel.getSortFilter());

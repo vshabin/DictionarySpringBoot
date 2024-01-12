@@ -1,9 +1,9 @@
 package com.example.demo.domainservices;
 
-import com.example.demo.domain.common.GeneralResultModel;
 import com.example.demo.domain.export.ExportCriteriaModel;
 import com.example.demo.domain.export.ExportReturnModel;
 import com.example.demo.domain.export.ExportType;
+import com.example.demo.domainservices.exportStrategies.ExportInterface;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;

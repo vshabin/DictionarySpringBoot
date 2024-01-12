@@ -1,10 +1,8 @@
 package com.example.demo.domainservices;
 
-import com.example.demo.domain.export.ExportCriteriaModel;
-import com.example.demo.domain.export.ExportReturnModel;
-import com.example.demo.domain.export.ExportType;
 import com.example.demo.domain.fileImport.ImportReturnModel;
 import com.example.demo.domain.fileImport.ImportType;
+import com.example.demo.domainservices.importStrategies.ImportInterface;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 

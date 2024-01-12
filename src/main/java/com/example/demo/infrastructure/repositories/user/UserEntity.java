@@ -19,9 +19,9 @@ public class UserEntity {
     public static final String LOGIN = "login";
     public static final String PASSWORD = "password";
     public static final String ROLE = "role";
-    public static final String FULLNAME = "full_name";
+    public static final String FULL_NAME = "full_name";
     public static final String CREATED_AT = "created_at";
-    public static final String ARCHIVEDATE = "archive_date";
+    public static final String ARCHIVE_DATE = "archive_date";
 
     @Id
     @Column(name = ID)
@@ -39,7 +39,7 @@ public class UserEntity {
     @NotBlank
     private String role;
 
-    @Column(name = FULLNAME)
+    @Column(name = FULL_NAME)
     @NotBlank
     private String fullName;
 
@@ -47,6 +47,6 @@ public class UserEntity {
     @WhenCreated
     private LocalDateTime createdAt;
 
-    @Column(name = ARCHIVEDATE)
+    @Column(name = ARCHIVE_DATE)
     private LocalDateTime archived;
 }
