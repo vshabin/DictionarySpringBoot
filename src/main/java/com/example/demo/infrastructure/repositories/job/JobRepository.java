@@ -56,11 +56,14 @@ public class JobRepository {
         var result = dbServer.getDB()
                 .find(JobEntity.class)
                 .where()
-                .ne(JobEntity.STATUS, TaskStatus.SUCCESS.name())
-                .ne(JobEntity.STATUS, TaskStatus.IS_RUNNING.name())
-                .ne(JobEntity.STATUS, TaskStatus.ATTEMPTS_ARE_OVER.name())
+                .notIn(JobEntity.STATUS,TaskStatus.SUCCESS.name(), TaskStatus.IS_RUNNING.name(), TaskStatus.ATTEMPTS_ARE_OVER.name())
+                .setMaxRows(100)
                 .findList();
         return mapStructMapper.toJobModelReturnList(result);
+    }
+
+    public List<JobModelReturn> getIsRunning() {
+
     }
 
     @Transactional
