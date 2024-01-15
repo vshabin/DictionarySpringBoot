@@ -1,12 +1,12 @@
 package com.example.demo.infrastructure.repositories.job;
 
 import com.example.demo.domain.common.GuidResultModel;
-import com.example.demo.domain.job.JobModelPost;
 import com.example.demo.domain.job.JobModelReturn;
 import com.example.demo.domain.job.TaskStatus;
 import com.example.demo.infrastructure.repositories.DbServer;
 import com.example.demo.infrastructure.repositories.JobMapper;
 import io.ebean.annotation.Transactional;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Repository;
 
 import javax.inject.Inject;
@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.UUID;
 
 @Repository
+@Log4j2
 public class JobRepository {
     private final String DATABASE_TRANSACTION_ERROR_CODE = "DATABASE_TRANSACTION_ERROR";
     private final String DATABASE_TRANSACTION_ERROR_MESSAGE = "Ошибка проведения транзакции: ";
@@ -27,6 +28,7 @@ public class JobRepository {
         var entity = dbServer.getDB().find(JobEntity.class).where().eq(JobEntity.JOB_ID, id).findOne();
         return mapStructMapper.toJobModelReturn(entity);
     }
+
     @Transactional
     public GuidResultModel save(JobModelReturn model) {
         var entity = mapStructMapper.toJobEntity(model);
@@ -50,40 +52,27 @@ public class JobRepository {
         return model;
     }
 
-    public List<JobModelReturn> getUnsuccessfulJobs(){
+    public List<JobModelReturn> getUnfinishedJobs() {
         var result = dbServer.getDB()
                 .find(JobEntity.class)
                 .where()
                 .ne(JobEntity.STATUS, TaskStatus.SUCCESS.name())
                 .ne(JobEntity.STATUS, TaskStatus.IS_RUNNING.name())
+                .ne(JobEntity.STATUS, TaskStatus.ATTEMPTS_ARE_OVER.name())
                 .findList();
         return mapStructMapper.toJobModelReturnList(result);
     }
 
     @Transactional
-    public List<JobModelReturn> updateList(List<JobModelReturn> jobs){
+    public List<JobModelReturn> updateList(List<JobModelReturn> jobs) {
         var entities = mapStructMapper.toJobEntityList(jobs);
         var result = new ArrayList<JobModelReturn>();
         try {
             dbServer.getDB().updateAll(entities);
         } catch (Exception e) {
+            log.error(e.getMessage(), e);
             result.add(new JobModelReturn(DATABASE_TRANSACTION_ERROR_CODE, DATABASE_TRANSACTION_ERROR_MESSAGE + e.getMessage()));
         }
         return result;
-    }
-
-    @Transactional
-    public GuidResultModel makeSuccess(UUID id) {
-        try {
-            dbServer.getDB()
-                    .update(JobEntity.class)
-                    .set(JobEntity.STATUS, TaskStatus.SUCCESS)
-                    .where()
-                    .eq(JobEntity.JOB_ID, id)
-                    .update();
-        } catch (Exception e) {
-            return new GuidResultModel(DATABASE_TRANSACTION_ERROR_CODE, DATABASE_TRANSACTION_ERROR_MESSAGE + e.getMessage());
-        }
-        return new GuidResultModel(id);
     }
 }

@@ -1,25 +1,20 @@
 package com.example.demo.domainservices;
 
 import com.example.demo.domain.common.GuidResultModel;
-import com.example.demo.domain.export.ExportCriteriaModel;
-import com.example.demo.domain.export.ExportReturnModel;
-import com.example.demo.domain.export.ExportType;
 import com.example.demo.domain.job.JobModelPost;
 import com.example.demo.domain.job.JobModelReturn;
 import com.example.demo.domain.job.TaskStatus;
 import com.example.demo.domain.job.TaskType;
-import com.example.demo.domainservices.exportStrategies.ExportInterface;
 import com.example.demo.domainservices.jobStrategies.JobInterface;
-import com.example.demo.domainservices.jobStrategies.TestJobImpl;
 import com.example.demo.infrastructure.repositories.job.JobRepository;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
 
-import java.io.IOException;
-import java.util.ArrayList;
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.Map;
 import java.util.UUID;
@@ -27,55 +22,55 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
+@Log4j2
 public class JobService {
+    private final String ATTEMPTS_ARE_OVER_ERROR_MESSAGE = "Task failed 5 times. We finish its execution";
+    private final String NO_SUCH_STRATEGY_ERROR_MESSAGE = "No such strategy";
+    private final Map<TaskType, JobInterface> strategies;
     @Autowired
     JobRepository repository;
-
     @Qualifier("jobs")
     @Autowired
     ThreadPoolTaskExecutor executor;
-    private final String NO_SUCH_STRATEGY_ERROR_CODE="NO_SUCH_STRATEGY_ERROR_CODE";
-    private final String NO_SUCH_STRATEGY_ERROR_MESSAGE="No such strategy";
-
-    private final Map<TaskType, JobInterface> strategies;
 
     public JobService(Collection<JobInterface> jobImpls) {
-        this.strategies = jobImpls.stream()
-                .collect(Collectors.toMap(JobInterface::getType, Function.identity()));
+        this.strategies = jobImpls.stream().collect(Collectors.toMap(JobInterface::getType, Function.identity()));
     }
 
-//    public GuidResultModel getFile(JobModelPost model){
-//        var strategy = strategies.get(model.getTaskType());
-//        if (strategy == null) {
-//            return new GuidResultModel(NO_SUCH_STRATEGY_ERROR_CODE,NO_SUCH_STRATEGY_ERROR_MESSAGE);
-//        }
-//        return strategies.get(model.getTaskType()).addTask(model);
-//    }
     @Scheduled(fixedRate = 10000, initialDelay = 1000)
     private void checkJobs() {
-        var jobs = repository.getUnsuccessfulJobs();
-        var startedJobs = new ArrayList<JobModelReturn>();
+        var jobs = repository.getUnfinishedJobs();
         for (JobModelReturn job : jobs) {
-            if(executor.getQueueCapacity() - executor.getQueueSize()>0){
+            if (job.getMinStartTime() != null) {
+                if (job.getMinStartTime().isAfter(LocalDateTime.now())) {
+                    continue;
+                }
+            }
+            if (executor.getQueueCapacity() - executor.getQueueSize() > 0) {
+                job.setAttemptNum(job.getAttemptNum() + 1);
+                if (job.getAttemptNum() >= 5) {
+                    job.setStatus(TaskStatus.ATTEMPTS_ARE_OVER);
+                    continue;
+                }
+                var strategy = strategies.get(job.getTaskType());
+                if (strategy == null) {
+                    job.setStatus(TaskStatus.FAILED);
+                    job.setTaskErrorMessage(NO_SUCH_STRATEGY_ERROR_MESSAGE);
+                    continue;
+                }
                 try {
-                    var strategy = strategies.get(job.getTaskType());
-                    if(strategy == null){
-                        job.setStatus(TaskStatus.FAILED);
-                        job.setTaskErrorMessage(NO_SUCH_STRATEGY_ERROR_CODE);
-                        repository.update(job);
-                        continue;
-                    }
-                    strategy.setParams(job.getParams(), job.getJobId());
-                    executor.execute(strategy);
+                    strategy.setParams(job);
+                } catch (Exception e) {
+                    job.setStatus(TaskStatus.FAILED);
+                    job.setTaskErrorMessage(e.getMessage());
+                    log.error(e.getMessage(), e);
+                    continue;
                 }
-                catch (Exception e){
-                    System.out.println(e.getMessage());
-                }
+                executor.execute(strategy);
                 job.setStatus(TaskStatus.IS_RUNNING);
-                startedJobs.add(job);
             }
         }
-        repository.updateList(startedJobs);
+        repository.updateList(jobs);
 
     }
 
@@ -92,7 +87,7 @@ public class JobService {
         return repository.save(modelReturn);
     }
 
-    public GuidResultModel makeSuccess(UUID id){
-        return repository.makeSuccess(id);
+    public JobModelReturn update(JobModelReturn model) {
+        return repository.update(model);
     }
 }

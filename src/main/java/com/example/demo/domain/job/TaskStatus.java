@@ -4,7 +4,9 @@ public enum TaskStatus {
     SUCCESS,
     FAILED,
     IS_RUNNING,
-    NEW
+    NEW,
+    ATTEMPTS_ARE_OVER
+
 
     ;
 }

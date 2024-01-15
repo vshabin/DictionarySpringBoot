@@ -34,6 +34,7 @@ public class AppConfig {
     @Qualifier("jobs")
     public ThreadPoolTaskExecutor taskExecutor() {
         ThreadPoolTaskExecutor pool = new ThreadPoolTaskExecutor();
+        pool.setCorePoolSize(10);
         pool.setMaxPoolSize(10);
         pool.setQueueCapacity(200);
         pool.setWaitForTasksToCompleteOnShutdown(true);
