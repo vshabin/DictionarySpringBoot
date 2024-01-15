@@ -1,6 +1,6 @@
 package com.example.demo.domain.job;
 
-public enum Status {
+public enum TaskStatus {
     SUCCESS,
     FAILED,
     IS_RUNNING,

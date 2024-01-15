@@ -28,6 +28,6 @@ public class JobController {
     @PutMapping("/add")
     @PreAuthorize("hasAuthority('ADMIN')")
     public GuidResultModel save(@Valid @RequestBody JobModelPost model){
-        return service.save(model);
+        return service.addNew(model);
     }
 }

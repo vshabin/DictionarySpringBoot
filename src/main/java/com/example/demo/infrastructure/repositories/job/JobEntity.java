@@ -48,7 +48,7 @@ public class JobEntity {
     private String status;
 
     @Column(name = ERROR_MESSAGE)
-    private String errorMessage;
+    private String taskErrorMessage;
 
     @Column(name = ATTEMPT_NUM)
     @Min(0)

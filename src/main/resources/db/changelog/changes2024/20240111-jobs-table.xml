@@ -28,9 +28,7 @@
             <column name="lastUpdateTime" type="TIMESTAMPTZ">
                 <constraints nullable="false"/>
             </column>
-            <column name="minStartTime" type="TIMESTAMPTZ">
-                <constraints nullable="false"/>
-            </column>
+            <column name="minStartTime" type="TIMESTAMPTZ"/>
             <column name="created_at" type="TIMESTAMPTZ">
                 <constraints nullable="false"/>
             </column>
