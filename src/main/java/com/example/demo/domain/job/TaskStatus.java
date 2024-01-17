@@ -5,7 +5,9 @@ public enum TaskStatus {
     FAILED,
     IS_RUNNING,
     NEW,
-    ATTEMPTS_ARE_OVER
+    ATTEMPTS_ARE_OVER,
+    CRITICAL_ERROR,
+    CANCELED
 
 
     ;

@@ -5,6 +5,7 @@ import com.example.demo.infrastructure.JsonUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.ConstraintViolationException;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
@@ -17,6 +18,7 @@ import java.io.IOException;
 import java.util.stream.Collectors;
 
 @ControllerAdvice
+@Log4j2
 public class ApplicationExceptionHandler {
     static final String VALIDATION_ERROR = "VALIDATION_ERROR";
     static final String ACCESS_ERROR = "ACCESS_ERROR";
@@ -26,7 +28,7 @@ public class ApplicationExceptionHandler {
 
     @ExceptionHandler(value = Exception.class)
     public void processUncaughtApplicationException(HttpServletRequest req, HttpServletResponse response, Exception e) throws IOException {
-        System.out.println(e.getClass());
+        log.error(e.getMessage(),e);
         var errorMessage = e.getMessage();
         var errorCode = UNKNOWN_ERROR;
         if (e instanceof MethodArgumentTypeMismatchException) {

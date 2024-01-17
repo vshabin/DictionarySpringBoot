@@ -19,9 +19,10 @@ import java.util.UUID;
 
 @Component
 public class JwtProvider {
-
-    private static final int ACCESS_TOKEN_EXPIRE_MINUTES = 5;
-    private static final int REFRESH_TOKEN_EXPIRE_DAYS = 30;
+    @Value("${jwt.expire.access.minutes}")
+    private int ACCESS_TOKEN_EXPIRE_MINUTES;
+    @Value("${jwt.expire.refresh.days}")
+    private int REFRESH_TOKEN_EXPIRE_DAYS;
     private final SecretKey ACCESS_SECRET;
     private final SecretKey REFRESH_SECRET;
 

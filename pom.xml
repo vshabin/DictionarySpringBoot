@@ -121,6 +121,16 @@
             <artifactId>spring-boot-starter-security</artifactId>
         </dependency>
         <dependency>
+            <groupId>org.unbroken-dome.jackson-bean-validation</groupId>
+            <artifactId>jackson-bean-validation</artifactId>
+            <version>0.6.0</version>
+        </dependency>
+        <dependency>
+            <groupId> org.openapitools</groupId>
+            <artifactId>jackson-databind-nullable</artifactId>
+            <version>0.2.1</version>
+        </dependency>
+        <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-api</artifactId>
             <version>0.12.3</version>

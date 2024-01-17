@@ -4,8 +4,10 @@ import com.example.demo.domain.job.JobModelReturn;
 import com.example.demo.domain.job.TaskType;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
-public interface JobInterface extends Runnable {
+public interface JobInterface {
+    int getMaxAttempt();
+    //int getDelayAfterError();
+    void run(JobModelReturn job);
     TaskType getType();
 
-    void setParams(JobModelReturn jobModel) throws JsonProcessingException;
 }

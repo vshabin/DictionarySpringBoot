@@ -10,11 +10,14 @@ import com.example.demo.infrastructure.repositories.job.JobRepository;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.Collection;
 import java.util.Map;
 import java.util.UUID;
@@ -24,8 +27,8 @@ import java.util.stream.Collectors;
 @Service
 @Log4j2
 public class JobService {
-    private final String ATTEMPTS_ARE_OVER_ERROR_MESSAGE = "Task failed 5 times. We finish its execution";
-    private final String NO_SUCH_STRATEGY_ERROR_MESSAGE = "No such strategy";
+    private final static String ATTEMPTS_ARE_OVER_ERROR_MESSAGE = "Task failed too many times. We finish its execution";
+    private final static String NO_SUCH_STRATEGY_ERROR_MESSAGE = "No such strategy";
     private final Map<TaskType, JobInterface> strategies;
     @Autowired
     JobRepository repository;
@@ -41,37 +44,43 @@ public class JobService {
     private void checkJobs() {
         var jobs = repository.getUnfinishedJobs();
         for (JobModelReturn job : jobs) {
-            if (job.getMinStartTime() != null) {
-                if (job.getMinStartTime().isAfter(LocalDateTime.now())) {
-                    continue;
-                }
-            }
             if (executor.getQueueCapacity() - executor.getQueueSize() > 0) {
-                job.setAttemptNum(job.getAttemptNum() + 1);
-                if (job.getAttemptNum() >= 5) {
-                    job.setStatus(TaskStatus.ATTEMPTS_ARE_OVER);
-                    continue;
-                }
                 var strategy = strategies.get(job.getTaskType());
                 if (strategy == null) {
                     job.setStatus(TaskStatus.FAILED);
                     job.setTaskErrorMessage(NO_SUCH_STRATEGY_ERROR_MESSAGE);
                     continue;
                 }
-                try {
-                    strategy.setParams(job);
-                } catch (Exception e) {
-                    job.setStatus(TaskStatus.FAILED);
-                    job.setTaskErrorMessage(e.getMessage());
-                    log.error(e.getMessage(), e);
+                //TODO в джобе ставить минимал старт тайм
+//                if (job.getStatus() == TaskStatus.FAILED && job.getLastUpdateTime().plus(strategy.getDelayAfterError(), ChronoUnit.MILLIS).isAfter(LocalDateTime.now())) {
+//                    continue;
+//                }
+                job.setAttemptNum(job.getAttemptNum() + 1);
+                if (job.getAttemptNum() >= strategy.getMaxAttempt()) {
+                    job.setStatus(TaskStatus.ATTEMPTS_ARE_OVER);
+                    job.setTaskErrorMessage(ATTEMPTS_ARE_OVER_ERROR_MESSAGE);
                     continue;
                 }
-                executor.execute(strategy);
+                executor.execute(() -> strategy.run(job));
                 job.setStatus(TaskStatus.IS_RUNNING);
             }
         }
         repository.updateList(jobs);
 
+    }
+
+    @EventListener(ApplicationReadyEvent.class)
+    private void rerunIsRunning() {
+        var jobs = repository.getIsRunning();
+        for (JobModelReturn job : jobs) {
+            var strategy = strategies.get(job.getTaskType());
+            if (strategy == null) {
+                job.setStatus(TaskStatus.FAILED);
+                job.setTaskErrorMessage(NO_SUCH_STRATEGY_ERROR_MESSAGE);
+                continue;
+            }
+            executor.execute(() -> strategy.run(job));
+        }
     }
 
     public JobModelReturn findById(UUID id) {

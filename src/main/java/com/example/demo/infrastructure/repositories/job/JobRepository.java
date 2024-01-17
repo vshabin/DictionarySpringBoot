@@ -10,6 +10,7 @@ import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Repository;
 
 import javax.inject.Inject;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -36,6 +37,7 @@ public class JobRepository {
             dbServer.getDB()
                     .save(entity);
         } catch (Exception e) {
+            log.error(e.getMessage(), e);
             return new GuidResultModel(DATABASE_TRANSACTION_ERROR_CODE, DATABASE_TRANSACTION_ERROR_MESSAGE + e.getMessage());
         }
         return new GuidResultModel(entity.getJobId());
@@ -47,6 +49,7 @@ public class JobRepository {
         try {
             dbServer.getDB().update(entity);
         } catch (Exception e) {
+            log.error(e.getMessage(), e);
             return new JobModelReturn(DATABASE_TRANSACTION_ERROR_CODE, DATABASE_TRANSACTION_ERROR_MESSAGE + e.getMessage());
         }
         return model;
@@ -57,13 +60,22 @@ public class JobRepository {
                 .find(JobEntity.class)
                 .where()
                 .notIn(JobEntity.STATUS,TaskStatus.SUCCESS.name(), TaskStatus.IS_RUNNING.name(), TaskStatus.ATTEMPTS_ARE_OVER.name())
+                .or()
+                .isNull(JobEntity.MIN_START_TIME)
+                .le(JobEntity.MIN_START_TIME, LocalDateTime.now())
+                .endOr()
                 .setMaxRows(100)
                 .findList();
         return mapStructMapper.toJobModelReturnList(result);
     }
 
     public List<JobModelReturn> getIsRunning() {
-
+        var result = dbServer.getDB()
+                .find(JobEntity.class)
+                .where()
+                .eq(JobEntity.STATUS, TaskStatus.IS_RUNNING.name())
+                .findList();
+        return mapStructMapper.toJobModelReturnList(result);
     }
 
     @Transactional
