@@ -1,4 +1,4 @@
-package com.example.demo.infrastructure.repositories;
+package com.example.demo.infrastructure.repositories.MapperInterfaces;
 
 import com.example.demo.domain.association.AssociationModelAdd;
 import com.example.demo.domain.association.AssociationModelReturn;

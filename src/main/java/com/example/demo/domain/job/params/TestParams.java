@@ -1,6 +1,5 @@
 package com.example.demo.domain.job.params;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
 
 @Getter

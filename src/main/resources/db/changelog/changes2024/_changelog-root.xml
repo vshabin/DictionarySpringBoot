@@ -6,5 +6,10 @@
         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
     <include file="db/changelog/changes2024/20240111-jobs-table.xml"/>
     <include file="db/changelog/changes2024/20240116-jobs-table.xml"/>
-
+    <include file="db/changelog/changes2024/20240117-crontasks-table.xml"/>
+    <include file="db/changelog/changes2024/20240118-crontasks-table.xml"/>
+    <include file="db/changelog/changes2024/20240118-2-crontasks-table.xml"/>
+    <include file="db/changelog/changes2024/20240118-3-crontasks-table.xml"/>
+    <include file="db/changelog/changes2024/20240118-4-crontasks-table.xml"/>
+    <include file="db/changelog/changes2024/20240118-5-crontasks-table.xml"/>
 </databaseChangeLog>

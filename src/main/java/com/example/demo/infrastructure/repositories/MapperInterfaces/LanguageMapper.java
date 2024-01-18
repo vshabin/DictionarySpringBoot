@@ -1,4 +1,4 @@
-package com.example.demo.infrastructure.repositories;
+package com.example.demo.infrastructure.repositories.MapperInterfaces;
 
 import com.example.demo.domain.language.LanguageModelAdd;
 import com.example.demo.domain.language.LanguageModelReturn;

@@ -3,8 +3,9 @@ package com.example.demo.infrastructure.repositories.job;
 import com.example.demo.domain.common.GuidResultModel;
 import com.example.demo.domain.job.JobModelReturn;
 import com.example.demo.domain.job.TaskStatus;
+import com.example.demo.domain.job.TaskType;
 import com.example.demo.infrastructure.repositories.DbServer;
-import com.example.demo.infrastructure.repositories.JobMapper;
+import com.example.demo.infrastructure.repositories.MapperInterfaces.JobMapper;
 import io.ebean.annotation.Transactional;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Repository;
@@ -59,7 +60,7 @@ public class JobRepository {
         var result = dbServer.getDB()
                 .find(JobEntity.class)
                 .where()
-                .notIn(JobEntity.STATUS,TaskStatus.SUCCESS.name(), TaskStatus.IS_RUNNING.name(), TaskStatus.ATTEMPTS_ARE_OVER.name())
+                .in(JobEntity.STATUS, TaskStatus.FAILED.name(), TaskStatus.NEW.name())
                 .or()
                 .isNull(JobEntity.MIN_START_TIME)
                 .le(JobEntity.MIN_START_TIME, LocalDateTime.now())
@@ -89,5 +90,40 @@ public class JobRepository {
             result.add(new JobModelReturn(DATABASE_TRANSACTION_ERROR_CODE, DATABASE_TRANSACTION_ERROR_MESSAGE + e.getMessage()));
         }
         return result;
+    }
+
+    public boolean getIsCanceled(UUID id) {
+        var entity = dbServer.getDB().find(JobEntity.class).where().eq(JobEntity.JOB_ID, id).findOne();
+        if (entity == null) {
+            return false;
+        }
+        return entity.getStatus().equals(TaskStatus.CANCELED.name());
+    }
+
+    @Transactional
+    public GuidResultModel cancel(UUID id) {
+        try {
+            dbServer.getDB()
+                    .find(JobEntity.class)
+                    .where()
+                    .eq(JobEntity.JOB_ID, id)
+                    .in(JobEntity.STATUS, TaskStatus.FAILED.name(), TaskStatus.IS_RUNNING.name(), TaskStatus.NEW.name())
+                    .asUpdate()
+                    .set(JobEntity.STATUS, TaskStatus.CANCELED.name())
+                    .update();
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            return new GuidResultModel(DATABASE_TRANSACTION_ERROR_CODE, DATABASE_TRANSACTION_ERROR_MESSAGE + e.getMessage());
+        }
+        return new GuidResultModel(id);
+    }
+
+    public boolean thereIsSameTask(TaskType taskName, LocalDateTime next) {
+        return dbServer.getDB()
+                .find(JobEntity.class)
+                .where()
+                .eq(JobEntity.TASK_TYPE, taskName.name())
+                .eq(JobEntity.MIN_START_TIME, next)
+                .exists();
     }
 }

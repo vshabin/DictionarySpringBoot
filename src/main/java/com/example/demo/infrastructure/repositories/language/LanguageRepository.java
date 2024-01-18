@@ -7,7 +7,7 @@ import com.example.demo.domain.language.LanguageCriteriaModel;
 import com.example.demo.domain.language.LanguageModelAdd;
 import com.example.demo.domain.language.LanguageModelReturn;
 import com.example.demo.infrastructure.repositories.DbServer;
-import com.example.demo.infrastructure.repositories.LanguageMapper;
+import com.example.demo.infrastructure.repositories.MapperInterfaces.LanguageMapper;
 import io.ebean.ExpressionList;
 import io.ebean.PagedList;
 import io.ebean.annotation.Transactional;

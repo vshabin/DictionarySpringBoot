@@ -6,7 +6,7 @@ import com.example.demo.domain.user.UserCriteriaModel;
 import com.example.demo.domain.user.UserModelPost;
 import com.example.demo.domain.user.UserModelReturn;
 import com.example.demo.infrastructure.repositories.DbServer;
-import com.example.demo.infrastructure.repositories.UserMapper;
+import com.example.demo.infrastructure.repositories.MapperInterfaces.UserMapper;
 import io.ebean.ExpressionList;
 import io.ebean.PagedList;
 import io.ebean.annotation.Transactional;

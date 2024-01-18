@@ -1,4 +1,4 @@
-package com.example.demo.infrastructure.repositories;
+package com.example.demo.infrastructure.repositories.MapperInterfaces;
 
 import com.example.demo.domain.job.JobModelPost;
 import com.example.demo.domain.job.JobModelReturn;

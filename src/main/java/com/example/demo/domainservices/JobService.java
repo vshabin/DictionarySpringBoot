@@ -17,7 +17,6 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.Collection;
 import java.util.Map;
 import java.util.UUID;
@@ -51,10 +50,6 @@ public class JobService {
                     job.setTaskErrorMessage(NO_SUCH_STRATEGY_ERROR_MESSAGE);
                     continue;
                 }
-                //TODO в джобе ставить минимал старт тайм
-//                if (job.getStatus() == TaskStatus.FAILED && job.getLastUpdateTime().plus(strategy.getDelayAfterError(), ChronoUnit.MILLIS).isAfter(LocalDateTime.now())) {
-//                    continue;
-//                }
                 job.setAttemptNum(job.getAttemptNum() + 1);
                 if (job.getAttemptNum() >= strategy.getMaxAttempt()) {
                     job.setStatus(TaskStatus.ATTEMPTS_ARE_OVER);
@@ -98,5 +93,17 @@ public class JobService {
 
     public JobModelReturn update(JobModelReturn model) {
         return repository.update(model);
+    }
+
+    public boolean getIsCanceled(UUID id) {
+        return repository.getIsCanceled(id);
+    }
+
+    public GuidResultModel cancel(UUID id) {
+        return repository.cancel(id);
+    }
+
+    public boolean thereIsSameTask(TaskType taskName, LocalDateTime next) {
+        return repository.thereIsSameTask(taskName, next);
     }
 }

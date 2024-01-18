@@ -10,6 +10,7 @@ public class SecurityConst {
         ADMIN,
         USER,
         REFRESH_TOKEN,
+        SCHEDULER,
 
 
         ;

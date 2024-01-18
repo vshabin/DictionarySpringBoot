@@ -1,11 +1,10 @@
-package com.example.demo.infrastructure.repositories;
+package com.example.demo.infrastructure.repositories.MapperInterfaces;
 
 
 import com.example.demo.domain.language.LanguageModelReturn;
 import com.example.demo.domain.word.WordModelReturn;
 import com.example.demo.domain.word.WordModelPost;
 import com.example.demo.domain.word.WordModelReturnEnriched;
-import com.example.demo.infrastructure.repositories.language.LanguageEntity;
 import com.example.demo.infrastructure.repositories.word.WordEntity;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;

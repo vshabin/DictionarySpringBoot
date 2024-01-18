@@ -30,4 +30,10 @@ public class JobController {
     public GuidResultModel save(@Valid @RequestBody JobModelPost model){
         return service.addNew(model);
     }
+
+    @PostMapping("/cancel/{id}")
+    @PreAuthorize("hasAuthority('ADMIN')")
+    public GuidResultModel cancel(@PathVariable UUID id){
+        return service.cancel(id);
+    }
 }
