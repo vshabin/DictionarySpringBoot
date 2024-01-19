@@ -10,5 +10,4 @@ public class CronTaskReturnModel {
     private UUID taskId;
     private TaskType taskName;
     private String cronExpression;
-    private UUID creatorUserId;
 }

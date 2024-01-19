@@ -24,7 +24,7 @@ public abstract class BaseJob implements JobInterface {
     private JobService jobService;
 
     @Override
-    public void run(JobModelReturn jobModel) {
+    public final void run(JobModelReturn jobModel) {
         ProgressMessageModel progressMessageModel =JsonUtils.fromJson(jobModel.getProgressMessage(), ProgressMessageModel.class)
                 .orElse(new ProgressMessageModel());
         try {
@@ -46,6 +46,7 @@ public abstract class BaseJob implements JobInterface {
             progressMessageModel.setErrorCount(progressMessageModel.getAllCount() - progressMessageModel.getSuccessCount());
             jobModel.setProgressMessage(JsonUtils.toJson(progressMessageModel));
         }
+        jobModel.setProgressMessage(JsonUtils.toJson(progressMessageModel));
         jobService.update(jobModel);
     }
     protected abstract void internalRun(JobModelReturn job, ProgressMessageModel progressMessageModel);
