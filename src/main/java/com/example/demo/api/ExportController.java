@@ -30,10 +30,11 @@ public class ExportController {
     @PostMapping()
     @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Export data", description = "Export data to .xlsx file")
-    public GuidResultModel export(@Valid @RequestBody ExportCriteriaModel criteriaModel) throws IOException {
+    public GuidResultModel export(@Valid @RequestBody ExportCriteriaModel criteriaModel){
         return service.export(criteriaModel);
     }
     @GetMapping(value = "/get/{jobId}")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<?> getFile(@PathVariable UUID jobId){
         var exportReturnModel = service.getFile(jobId);
         var headers = new HttpHeaders();

@@ -16,6 +16,8 @@ import com.example.demo.domainservices.AssociationService;
 import com.example.demo.domainservices.JobService;
 import com.example.demo.domainservices.UserService;
 import com.example.demo.domainservices.WordService;
+import com.example.demo.domainservices.jobStrategies.ExportWriters.AssociationsExportExcelWriter;
+import com.example.demo.domainservices.jobStrategies.ExportWriters.WriterInterface;
 import com.example.demo.infrastructure.ExcelUtils;
 import com.example.demo.infrastructure.JsonUtils;
 import io.micrometer.common.util.StringUtils;
@@ -37,31 +39,21 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import static com.example.demo.domainservices.exportStrategies.ExportUtils.createCell;
-import static com.example.demo.domainservices.exportStrategies.ExportUtils.writeHeader;
+import static com.example.demo.infrastructure.ExcelUtils.createCell;
+import static com.example.demo.infrastructure.ExcelUtils.writeHeader;
 
 @Log4j2
 @Component
 public class AssociationsExportJob extends BaseJob {
     private static final String FAILED_READ_PARAMS_EXCEPTION_MESSAGE = "Failed to read parameters";
     private static final String FILE_IS_EMPTY_ERROR_MESSAGE = "Файл результата пуст";
-    private static final String FILE_IS_EMPTY_ERROR_CODE = "FILE_IS_EMPTY_ERROR_CODE";
     private static final String NO_USER_PASSED_FILTER_ERROR_CODE = "NO_USER_PASSED_FILTER";
     private static final String NO_USER_PASSED_FILTER_ERROR_MESSAGE = "Ни один пользователь не прошёл условия фильтра";
     private final String TOO_MANY_USERS_FILTERED_ERROR_CODE = "TOO_MANY_USERS_FILTERED_ERROR_CODE";
     private final String TOO_MANY_USERS_FILTERED_ERROR_MESSAGE = "Слишком много людей было найдено в фильтре";
 
-    private static final String FILE_NAME = "AssociationsExport";
-    private static final String FILE_EXTENSION = ".xlsx";
-    private final List<String> HEADERS = List.of(
-            "Слово",
-            "Перевод",
-            "Дата добавления",
-            "Кем добавлено (ФИО)",
-            "Кем добавлено (Логин)",
-            "Кем добавлено (Роль)"
-    );
-    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy HH-mm");
+
+
 
     @Autowired
     private UserService userService;
@@ -85,10 +77,14 @@ public class AssociationsExportJob extends BaseJob {
                 .orElseThrow(() -> new CriticalErrorException(FAILED_READ_PARAMS_EXCEPTION_MESSAGE));
         var progress = JsonUtils.fromJson(job.getProgress(), ExportProgress.class)
                 .orElse(new ExportProgress(0, 500, 0));
-        var workbook = new SXSSFWorkbook();
-        var sheets = new HashMap<String, SXSSFSheet>();
-        var defaultStyle = ExcelUtils.getDefaultStyle(workbook);
-        var boldStyle = ExcelUtils.getBoldStyle(workbook);
+        WriterInterface writer;
+        switch (criteriaModel.getFileExtension()) {
+            case ".xlsx":
+                writer = new AssociationsExportExcelWriter();
+                break;
+            default:
+                throw new CriticalErrorException("Unknown file extension");
+        }
         PageResult<AssociationsExportModel> pageResult;
         criteriaModel.setSize(progress.getPageSize());
         criteriaModel.setPageNumber(progress.getLastPage());
@@ -108,7 +104,7 @@ public class AssociationsExportJob extends BaseJob {
             progressMessageModel.setAllCount(pageResult.getTotalCount());
             progress.setAllCount(pageResult.getTotalCount());
 
-            addData(pageResult.getPageContent(), workbook, defaultStyle, boldStyle, sheets);
+            writer.addData(pageResult.getPageContent());
 
             progressMessageModel.setSuccessCount(progressMessageModel.getSuccessCount() + pageResult.getPageContent().size());
 
@@ -116,17 +112,17 @@ public class AssociationsExportJob extends BaseJob {
             jobService.update(job);
         }
         while (pageResult.getPageContent().size() == criteriaModel.getSize());
-        sheets.forEach((key, sheet) -> {
-                    CellRangeAddress region = new CellRangeAddress(sheet.getLastRowNum() - 1, sheet.getLastRowNum(), 0, HEADERS.size() - 1);
-                    RegionUtil.setBorderBottom(BorderStyle.MEDIUM, region, sheet);
-                }
-        );
+        if (criteriaModel.getFileExtension() == "xlsx") {
+            ((AssociationsExportExcelWriter)writer).doBorders();
+        }
+
         try {
             FileOutputStream fos = new FileOutputStream(job.getJobId().toString());
-            workbook.write(fos);
+            writer.write(fos);
         } catch (Exception e) {
             throw new CriticalErrorException(e.getMessage());
         }
+        log.info("Finish exporting associations");
     }
 
     @Override
@@ -202,44 +198,4 @@ public class AssociationsExportJob extends BaseJob {
     }
 
 
-    private void write(SXSSFSheet sheet, AssociationsExportModel model, CellStyle style) {
-        int rowCount = sheet.getLastRowNum() + 1;
-
-        Row row = sheet.createRow(rowCount);
-        var cellNum = 0;
-        createCell(row, cellNum++, model.getWord() != null ? model.getWord().getWord() : null, style);
-        createCell(row, cellNum++, model.getTranslation() != null ? model.getTranslation().getWord() : null, style);
-        createCell(row, cellNum++, model.getCreatedAt() != null ? model.getCreatedAt().format(formatter) : null, style);
-        createCell(row, cellNum++, model.getUser() != null ? model.getUser().getFullName() : null, style);
-        createCell(row, cellNum++, model.getUser().getLogin(), style);
-        createCell(row, cellNum++, model.getUser() != null ? model.getUser().getRole().name() : null, style);
-        CellRangeAddress region = new CellRangeAddress(sheet.getLastRowNum() - 1, sheet.getLastRowNum(), 0, HEADERS.size() - 1);
-        RegionUtil.setBorderLeft(BorderStyle.MEDIUM, region, sheet);
-        RegionUtil.setBorderRight(BorderStyle.MEDIUM, region, sheet);
-    }
-
-    private void addData(List<AssociationsExportModel> modelList,
-                         SXSSFWorkbook workbook,
-                         CellStyle defaultStyle,
-                         CellStyle boldStyle,
-                         Map<String, SXSSFSheet> sheets) {
-        SXSSFSheet sheet;
-
-        for (AssociationsExportModel model : modelList) {
-            var dictName = String.join(" - ", model.getWord().getLanguageName(), model.getTranslation().getLanguageName());
-            sheet = sheets.get(dictName);
-            if (sheet == null) {
-                sheet = workbook.createSheet(dictName);
-                sheet.trackAllColumnsForAutoSizing();
-                writeHeader(sheet, boldStyle, HEADERS);
-                for (int i = 0; i < HEADERS.size(); i++) {
-                    sheet.autoSizeColumn(i);
-                    sheet.setColumnWidth(i, sheet.getColumnWidth(i) + 1280);
-                }
-                sheet.untrackAllColumnsForAutoSizing();
-                sheets.put(dictName, sheet);
-            }
-            write(sheet, model, defaultStyle);
-        }
-    }
 }

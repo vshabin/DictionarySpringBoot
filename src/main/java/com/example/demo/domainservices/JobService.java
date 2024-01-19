@@ -6,6 +6,7 @@ import com.example.demo.domain.job.JobModelReturn;
 import com.example.demo.domain.job.TaskStatus;
 import com.example.demo.domain.job.TaskType;
 import com.example.demo.domainservices.jobStrategies.JobInterface;
+import com.example.demo.infrastructure.CommonUtils;
 import com.example.demo.infrastructure.repositories.job.JobRepository;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,6 +15,7 @@ import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -56,7 +58,10 @@ public class JobService {
                     job.setTaskErrorMessage(ATTEMPTS_ARE_OVER_ERROR_MESSAGE);
                     continue;
                 }
-                executor.execute(() -> strategy.run(job));
+                executor.execute(() -> {
+                    SecurityContextHolder.getContext().setAuthentication(CommonUtils.getSchedulerAuth());
+                    strategy.run(job);
+                });
                 job.setStatus(TaskStatus.IS_RUNNING);
             }
         }

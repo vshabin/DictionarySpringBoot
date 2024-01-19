@@ -11,6 +11,9 @@ import com.example.demo.domain.user.UserCriteriaModel;
 import com.example.demo.domain.user.UserModelReturn;
 import com.example.demo.domainservices.JobService;
 import com.example.demo.domainservices.UserService;
+import com.example.demo.domainservices.jobStrategies.ExportWriters.AssociationsExportExcelWriter;
+import com.example.demo.domainservices.jobStrategies.ExportWriters.UserExportExcelWriter;
+import com.example.demo.domainservices.jobStrategies.ExportWriters.WriterInterface;
 import com.example.demo.infrastructure.ExcelUtils;
 import com.example.demo.infrastructure.JsonUtils;
 import io.micrometer.common.util.StringUtils;
@@ -32,21 +35,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static com.example.demo.domainservices.exportStrategies.ExportUtils.createCell;
-import static com.example.demo.domainservices.exportStrategies.ExportUtils.writeHeader;
+import static com.example.demo.infrastructure.ExcelUtils.createCell;
+import static com.example.demo.infrastructure.ExcelUtils.writeHeader;
 
 @Log4j2
 @Component
 public class UserExportJob extends BaseJob {
     private static final String FILE_IS_EMPTY_ERROR_MESSAGE = "Файл результата пуст";
     private static final String FAILED_READ_PARAMS_EXCEPTION_MESSAGE = "Failed to read parameters";
-    private final List<String> HEADERS = List.of(
-            "Логин",
-            "ФИО",
-            "Роль",
-            "Дата добавления"
-    );
-    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy HH-mm");
+
     @Autowired
     private UserService userService;
     @Autowired
@@ -61,10 +58,14 @@ public class UserExportJob extends BaseJob {
         var progress = JsonUtils.fromJson(job.getProgress(), ExportProgress.class)
                 .orElse(new ExportProgress(0, 500, 0));
 
-        var workbook = new SXSSFWorkbook();
-        var sheets = new HashMap<String, SXSSFSheet>();
-        var defaultStyle = ExcelUtils.getDefaultStyle(workbook);
-        var boldStyle = ExcelUtils.getBoldStyle(workbook);
+        WriterInterface writer;
+        switch (criteriaModel.getFileExtension()) {
+            case ".xlsx":
+                writer = new UserExportExcelWriter();
+                break;
+            default:
+                throw new CriticalErrorException("Unknown file extension");
+        }
         PageResult<UserModelReturn> pageResult;
         criteriaModel.setSize(progress.getPageSize());
         criteriaModel.setPageNumber(progress.getLastPage());
@@ -79,28 +80,24 @@ public class UserExportJob extends BaseJob {
             progressMessageModel.setAllCount(pageResult.getTotalCount());
             progress.setAllCount(pageResult.getTotalCount());
 
-            addData(pageResult.getPageContent(), workbook, defaultStyle, boldStyle, sheets);
+            writer.addData(pageResult.getPageContent());
 
             progressMessageModel.setSuccessCount(progressMessageModel.getSuccessCount() + pageResult.getPageContent().size());
 
             job.setProgress(JsonUtils.toJson(progress));
             jobService.update(job);
         } while (pageResult.getPageContent().size() == criteriaModel.getSize());
-        sheets.forEach((key, sheet) -> {
-                    CellRangeAddress region = new CellRangeAddress(0, sheet.getLastRowNum(), 0, HEADERS.size() - 1);
-                    RegionUtil.setBorderTop(BorderStyle.MEDIUM, region, sheet);
-                    RegionUtil.setBorderBottom(BorderStyle.MEDIUM, region, sheet);
-                    RegionUtil.setBorderLeft(BorderStyle.MEDIUM, region, sheet);
-                    RegionUtil.setBorderRight(BorderStyle.MEDIUM, region, sheet);
-                }
-        );
+        if (criteriaModel.getFileExtension() == "xlsx") {
+            ((UserExportExcelWriter)writer).doBorders();
+        }
 
         try {
             FileOutputStream fos = new FileOutputStream(job.getJobId().toString());
-            workbook.write(fos);
+            writer.write(fos);
         } catch (Exception e) {
             throw new CriticalErrorException(e.getMessage());
         }
+        log.info("UserExportJob finished");
     }
 
     @Override
@@ -129,39 +126,6 @@ public class UserExportJob extends BaseJob {
         return userService.getPage(userCriteriaModel);
     }
 
-    private void write(SXSSFSheet sheet, UserModelReturn model, CellStyle style) {
-        int rowCount = sheet.getLastRowNum() + 1;
 
-        Row row = sheet.createRow(rowCount);
-        var cellNum = 0;
-        createCell(row, cellNum++, model.getLogin(), style);
-        createCell(row, cellNum++, model.getFullName(), style);
-        createCell(row, cellNum++, model.getRole() != null ? model.getRole().name() : null, style);
-        createCell(row, cellNum++, model.getCreatedAt() != null ? model.getCreatedAt().format(formatter) : null, style);
-    }
 
-    private void addData(List<UserModelReturn> modelList,
-                         SXSSFWorkbook workbook,
-                         CellStyle defaultStyle,
-                         CellStyle boldStyle,
-                         Map<String, SXSSFSheet> sheets) {
-        SXSSFSheet sheet;
-
-        for (UserModelReturn model : modelList) {
-            var dictName = model.getRole().name();
-            sheet = sheets.get(dictName);
-            if (sheet == null) {
-                sheet = workbook.createSheet(dictName);
-                sheet.trackAllColumnsForAutoSizing();
-                writeHeader(sheet, boldStyle, HEADERS);
-                for (int i = 0; i < HEADERS.size(); i++) {
-                    sheet.autoSizeColumn(i);
-                    sheet.setColumnWidth(i, sheet.getColumnWidth(i) + 1280);
-                }
-                sheet.untrackAllColumnsForAutoSizing();
-                sheets.put(dictName, sheet);
-            }
-            write(sheet, model, defaultStyle);
-        }
-    }
 }

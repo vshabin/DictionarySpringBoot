@@ -43,8 +43,6 @@ public abstract class BaseJob implements JobInterface {
             } else {
                 jobModel.setStatus(TaskStatus.CRITICAL_ERROR);
             }
-            progressMessageModel.setErrorCount(progressMessageModel.getAllCount() - progressMessageModel.getSuccessCount());
-            jobModel.setProgressMessage(JsonUtils.toJson(progressMessageModel));
         }
         jobModel.setProgressMessage(JsonUtils.toJson(progressMessageModel));
         jobService.update(jobModel);
