@@ -3,21 +3,15 @@ package com.example.demo.domainservices;
 import com.example.demo.domain.common.GuidResultModel;
 import com.example.demo.domain.export.ExportCriteriaModel;
 import com.example.demo.domain.export.ExportReturnModel;
-import com.example.demo.domain.export.ExportType;
 import com.example.demo.domain.job.JobModelPost;
 import com.example.demo.domain.job.TaskStatus;
-import com.example.demo.domainservices.exportStrategies.ExportInterface;
 import com.example.demo.infrastructure.JsonUtils;
 import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
-import java.util.Collection;
-import java.util.Map;
 import java.util.UUID;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 @Service
 public class ExportService {
@@ -49,19 +43,17 @@ public class ExportService {
             return new ExportReturnModel(NOT_READY_ERROR_CODE, NOT_READY_ERROR_MESSAGE);
         }
 
-        var paramsOptional = JsonUtils.fromJson(job.getParams(), ExportCriteriaModel.class);
-        if (paramsOptional.isEmpty()) {
-            return new ExportReturnModel(FAILED_READ_PARAMS_ERROR_CODE, FAILED_READ_PARAMS_ERROR_MESSAGE);
-        } else {
-            return new ExportReturnModel(taskId.toString(), paramsOptional.get().getFileExtension(), file);
-        }
-
+        var paramsOptional = JsonUtils.readJSON(job.getParams(), ExportCriteriaModel.class);
+        return paramsOptional.map(exportCriteriaModel ->
+                        new ExportReturnModel(taskId.toString(), exportCriteriaModel.getFileExtension(), file))
+                .orElseGet(() ->
+                        new ExportReturnModel(FAILED_READ_PARAMS_ERROR_CODE, FAILED_READ_PARAMS_ERROR_MESSAGE));
     }
 
     public GuidResultModel export(ExportCriteriaModel criteriaModel) {
         var jobModel = new JobModelPost();
         jobModel.setTaskType(criteriaModel.getExportType().getJobType());
-        jobModel.setParams(JsonUtils.toJson(criteriaModel));
+        jobModel.setParams(JsonUtils.toString(criteriaModel));
         return jobService.addNew(jobModel);
     }
 }

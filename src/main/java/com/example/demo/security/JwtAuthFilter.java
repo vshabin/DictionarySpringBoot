@@ -41,7 +41,7 @@ public class JwtAuthFilter extends GenericFilterBean {
         if (parsingResult.getParsingResultType() == ParsingResult.ParsingResultType.ERROR) {
             ((HttpServletResponse) response).setStatus(403);
             response.setContentType("application/json");
-            response.getWriter().write(JsonUtils.toJson(new GeneralResultModel(JWT_FILTER_ERROR_CODE, JWT_FILTER_ERROR_MESSAGE)));
+            response.getWriter().write(JsonUtils.toString(new GeneralResultModel(JWT_FILTER_ERROR_CODE, JWT_FILTER_ERROR_MESSAGE)));
             response.getWriter().flush();
             return;
         }

@@ -17,7 +17,8 @@ import java.time.LocalDateTime;
 
 @Log4j2
 public abstract class BaseJob implements JobInterface {
-    public Duration DELAY_AFTER_FAIL = Duration.ofMinutes(5);
+    //public Duration DELAY_AFTER_FAIL = Duration.ofMinutes(5);
+    public Duration DELAY_AFTER_FAIL = Duration.ofSeconds(5);
 
     @Autowired
     @Lazy
@@ -25,7 +26,7 @@ public abstract class BaseJob implements JobInterface {
 
     @Override
     public final void run(JobModelReturn jobModel) {
-        ProgressMessageModel progressMessageModel =JsonUtils.fromJson(jobModel.getProgressMessage(), ProgressMessageModel.class)
+        ProgressMessageModel progressMessageModel =JsonUtils.readJSON(jobModel.getProgressMessage(), ProgressMessageModel.class)
                 .orElse(new ProgressMessageModel());
         try {
             internalRun(jobModel, progressMessageModel);
@@ -41,10 +42,11 @@ public abstract class BaseJob implements JobInterface {
             } else if (e instanceof CancelException) {
                 jobModel.setStatus(TaskStatus.CANCELED);
             } else {
-                jobModel.setStatus(TaskStatus.CRITICAL_ERROR);
+                jobModel.setStatus(TaskStatus.FAILED);
+                jobModel.setMinStartTime(LocalDateTime.now().plus(DELAY_AFTER_FAIL));
             }
         }
-        jobModel.setProgressMessage(JsonUtils.toJson(progressMessageModel));
+        jobModel.setProgressMessage(JsonUtils.toString(progressMessageModel));
         jobService.update(jobModel);
     }
     protected abstract void internalRun(JobModelReturn job, ProgressMessageModel progressMessageModel);

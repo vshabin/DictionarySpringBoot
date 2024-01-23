@@ -67,7 +67,7 @@ public class ApplicationExceptionHandler {
 
         response.setCharacterEncoding("UTF-8");
         response.setContentType("application/json");
-        response.getWriter().write(JsonUtils.toJson(new GeneralResultModel(errorCode, errorMessage)));
+        response.getWriter().write(JsonUtils.toString(new GeneralResultModel(errorCode, errorMessage)));
         response.getWriter().flush();
     }
 }

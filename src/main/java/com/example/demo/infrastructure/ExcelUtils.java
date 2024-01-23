@@ -34,7 +34,7 @@ public class ExcelUtils {
         style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
         return style;
     }
-    public static void writeHeader(SXSSFSheet sheet, CellStyle style, List<String> headers) {
+    public static void writeHeader(Sheet sheet, CellStyle style, List<String> headers) {
         Row row = sheet.createRow(0);
 
         for (int i = 0; i < headers.size(); i++) {

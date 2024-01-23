@@ -3,8 +3,8 @@ package com.example.demo.infrastructure;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import org.openapitools.jackson.nullable.JsonNullableModule;
 
 import java.util.Optional;
 
@@ -13,10 +13,11 @@ public class JsonUtils {
     private static final ObjectMapper objectMapper = new ObjectMapper()
             .findAndRegisterModules()
             .registerModule(new JavaTimeModule())
+            .enable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
             .enable(DeserializationFeature.FAIL_ON_MISSING_CREATOR_PROPERTIES)
             .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
 
-    public static String toJson(Object object) {
+    public static String toString(Object object) {
         if(object == null){
             return null;
         }
@@ -28,7 +29,7 @@ public class JsonUtils {
 
     }
 
-    public static <T> Optional<T> fromJson(String json, Class<T> objectClass){
+    public static <T> Optional<T> readJSON(String json, Class<T> objectClass){
         if (json == null) {
             return Optional.empty();
         }

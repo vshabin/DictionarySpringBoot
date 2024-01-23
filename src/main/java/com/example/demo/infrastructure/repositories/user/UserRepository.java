@@ -8,7 +8,6 @@ import com.example.demo.domain.user.UserModelReturn;
 import com.example.demo.infrastructure.repositories.DbServer;
 import com.example.demo.infrastructure.repositories.MapperInterfaces.UserMapper;
 import io.ebean.ExpressionList;
-import io.ebean.PagedList;
 import io.ebean.annotation.Transactional;
 import io.micrometer.common.util.StringUtils;
 import org.springframework.stereotype.Repository;
@@ -68,16 +67,16 @@ public class UserRepository {
     }
 
     public List<UserModelReturn> getFilteredList(UserCriteriaModel criteriaModel) {
-        var entityList = createExpression(criteriaModel,
-                dbServer.getDB()
-                        .find(UserEntity.class)
-                        .where())
-                .findList();
+        var exp = dbServer.getDB()
+                .find(UserEntity.class)
+                .where();
+        applyCriteria(criteriaModel, exp);
+        var entityList = exp.findList();
         return mapStructMapper.toUserModelReturnList(entityList);
     }
 
 
-    private ExpressionList<UserEntity> createExpression(UserCriteriaModel criteriaModel, ExpressionList<UserEntity> expr) {
+    private void applyCriteria(UserCriteriaModel criteriaModel, ExpressionList<UserEntity> expr) {
         if (StringUtils.isNotBlank(criteriaModel.getRoleFilter())) {
             expr.like(UserEntity.ROLE, escape(criteriaModel.getRoleFilter(), '%'));
         }
@@ -90,7 +89,6 @@ public class UserRepository {
         if (StringUtils.isNotBlank(criteriaModel.getSortFilter())) {
             expr.orderBy(criteriaModel.getSortFilter());
         }
-        return expr;
     }
 
     private String escape(String string, char esc) {
@@ -98,12 +96,15 @@ public class UserRepository {
     }
 
     public PageResult<UserModelReturn> getPage(UserCriteriaModel userCriteriaModel) {
-        PagedList<UserEntity> entityPagedList = createExpression(userCriteriaModel,
-                dbServer.getDB()
-                        .find(UserEntity.class)
-                        .setFirstRow(userCriteriaModel.getSize() * (userCriteriaModel.getPageNumber() - 1))
-                        .setMaxRows(userCriteriaModel.getSize()).where())
-                .findPagedList();
-        return new PageResult<>(mapStructMapper.toUserModelReturnList(entityPagedList.getList()), entityPagedList.getTotalCount());
+        var exp = dbServer.getDB().find(UserEntity.class)
+                .setFirstRow(userCriteriaModel.getSize() * (userCriteriaModel.getPageNumber() - 1))
+                .setMaxRows(userCriteriaModel.getSize())
+                .where();
+
+        applyCriteria(userCriteriaModel, exp);
+
+        var page = exp.findPagedList();
+
+        return new PageResult<>(mapStructMapper.toUserModelReturnList(page.getList()), page.getTotalCount());
     }
 }

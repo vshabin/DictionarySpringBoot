@@ -17,30 +17,20 @@ import com.example.demo.domainservices.JobService;
 import com.example.demo.domainservices.UserService;
 import com.example.demo.domainservices.WordService;
 import com.example.demo.domainservices.jobStrategies.ExportWriters.AssociationsExportExcelWriter;
-import com.example.demo.domainservices.jobStrategies.ExportWriters.WriterInterface;
-import com.example.demo.infrastructure.ExcelUtils;
+import com.example.demo.domainservices.jobStrategies.ExportWriters.AssociationsExportWriterInterface;
 import com.example.demo.infrastructure.JsonUtils;
 import io.micrometer.common.util.StringUtils;
 import lombok.extern.log4j.Log4j2;
-import org.apache.poi.ss.usermodel.BorderStyle;
-import org.apache.poi.ss.usermodel.CellStyle;
-import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.ss.util.CellRangeAddress;
-import org.apache.poi.ss.util.RegionUtil;
-import org.apache.poi.xssf.streaming.SXSSFSheet;
-import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-
-import static com.example.demo.infrastructure.ExcelUtils.createCell;
-import static com.example.demo.infrastructure.ExcelUtils.writeHeader;
 
 @Log4j2
 @Component
@@ -51,8 +41,7 @@ public class AssociationsExportJob extends BaseJob {
     private static final String NO_USER_PASSED_FILTER_ERROR_MESSAGE = "Ни один пользователь не прошёл условия фильтра";
     private final String TOO_MANY_USERS_FILTERED_ERROR_CODE = "TOO_MANY_USERS_FILTERED_ERROR_CODE";
     private final String TOO_MANY_USERS_FILTERED_ERROR_MESSAGE = "Слишком много людей было найдено в фильтре";
-
-
+    private static final String EXCEL_EXTENSION = ".xlsx";
 
 
     @Autowired
@@ -73,55 +62,71 @@ public class AssociationsExportJob extends BaseJob {
     @Override
     public void internalRun(JobModelReturn job, ProgressMessageModel progressMessageModel) {
         log.info("Start exporting associations");
-        ExportCriteriaModel criteriaModel = JsonUtils.fromJson(job.getParams(), ExportCriteriaModel.class)
+        ExportCriteriaModel criteriaModel = JsonUtils.readJSON(job.getParams(), ExportCriteriaModel.class)
                 .orElseThrow(() -> new CriticalErrorException(FAILED_READ_PARAMS_EXCEPTION_MESSAGE));
-        var progress = JsonUtils.fromJson(job.getProgress(), ExportProgress.class)
-                .orElse(new ExportProgress(0, 500, 0));
-        WriterInterface writer;
+        var progress = JsonUtils.readJSON(job.getProgress(), ExportProgress.class)
+                .orElse(new ExportProgress(0, 1, 0));
+        FileInputStream fileStream;
+        try {
+            var file = new File(job.getJobId().toString());
+            file.createNewFile();
+            fileStream = new FileInputStream(job.getJobId().toString());
+        }
+        catch (Exception e){
+            throw new CriticalErrorException(e.getMessage());
+        }
+        AssociationsExportWriterInterface writer;
         switch (criteriaModel.getFileExtension()) {
-            case ".xlsx":
-                writer = new AssociationsExportExcelWriter();
+            case EXCEL_EXTENSION:
+                writer = new AssociationsExportExcelWriter(fileStream);
                 break;
             default:
                 throw new CriticalErrorException("Unknown file extension");
         }
+        writer.preWrite();
+
         PageResult<AssociationsExportModel> pageResult;
         criteriaModel.setSize(progress.getPageSize());
-        criteriaModel.setPageNumber(progress.getLastPage());
-        do {
-            progress.setLastPage(progress.getLastPage() + 1);
-            criteriaModel.setPageNumber(progress.getLastPage());
-            pageResult = getAssociationsExportModels(criteriaModel);
-            if (pageResult == null) {
-                break;
-            }
-            if (pageResult.getTotalCount() == 0) {
-                throw new CriticalErrorException(FILE_IS_EMPTY_ERROR_MESSAGE);
-            }
-            if (pageResult.getErrorCode() != null) {
-                throw new CriticalErrorException(pageResult.getErrorMessage());
-            }
-            progressMessageModel.setAllCount(pageResult.getTotalCount());
-            progress.setAllCount(pageResult.getTotalCount());
-
-            writer.addData(pageResult.getPageContent());
-
-            progressMessageModel.setSuccessCount(progressMessageModel.getSuccessCount() + pageResult.getPageContent().size());
-
-            job.setProgress(JsonUtils.toJson(progress));
-            jobService.update(job);
-        }
-        while (pageResult.getPageContent().size() == criteriaModel.getSize());
-        if (criteriaModel.getFileExtension() == "xlsx") {
-            ((AssociationsExportExcelWriter)writer).doBorders();
-        }
-
+        criteriaModel.setPageNumber(progress.getLastPage()+1);
         try {
-            FileOutputStream fos = new FileOutputStream(job.getJobId().toString());
-            writer.write(fos);
-        } catch (Exception e) {
-            throw new CriticalErrorException(e.getMessage());
+            do {
+                progress.setLastPage(progress.getLastPage() + 1);
+                criteriaModel.setPageNumber(progress.getLastPage());
+                pageResult = getAssociationsExportModels(criteriaModel);
+//            if (progress.getLastPage() == 50) {
+//                throw new ErrorException("ПРОВЕРКА");
+//            }
+                if (pageResult == null) {
+                    break;
+                }
+                if (pageResult.getTotalCount() == 0) {
+                    throw new CriticalErrorException(FILE_IS_EMPTY_ERROR_MESSAGE);
+                }
+                if (pageResult.getErrorCode() != null) {
+                    throw new CriticalErrorException(pageResult.getErrorMessage());
+                }
+                progressMessageModel.setAllCount(pageResult.getTotalCount());
+                progress.setAllCount(pageResult.getTotalCount());
+
+                writer.addData(pageResult.getPageContent());
+
+                progressMessageModel.setSuccessCount(progressMessageModel.getSuccessCount() + pageResult.getPageContent().size());
+
+                job.setProgress(JsonUtils.toString(progress));
+                jobService.update(job);
+            }
+            while (pageResult.getPageContent().size() == criteriaModel.getSize());
+            writer.postWrite();
+        } finally {
+            try {
+                FileOutputStream fos = new FileOutputStream(job.getJobId().toString());
+                writer.write(fos);
+            } catch (Exception ex) {
+                log.error(ex.getMessage(), ex);
+                //throw new CriticalErrorException(ex.getMessage());
+            }
         }
+
         log.info("Finish exporting associations");
     }
 
@@ -131,7 +136,6 @@ public class AssociationsExportJob extends BaseJob {
     }
 
     private PageResult<AssociationsExportModel> getAssociationsExportModels(ExportCriteriaModel criteriaModel) {
-
         var userCriteriaModel = new UserCriteriaModel();
         if (StringUtils.isNotBlank(criteriaModel.getByRoleFilter())) {
             userCriteriaModel.setRoleFilter(criteriaModel.getByRoleFilter());
@@ -163,7 +167,12 @@ public class AssociationsExportJob extends BaseJob {
             associationCriteriaModel.setToFilter(criteriaModel.getToFilter());
         }
 
-        associationCriteriaModel.setCreatedByUUID(usersMap.keySet());
+
+        if (StringUtils.isNotBlank(criteriaModel.getByRoleFilter()) ||
+                StringUtils.isNotBlank(criteriaModel.getByLoginFilter()) ||
+                StringUtils.isNotBlank(criteriaModel.getByFullNameFilter())) {
+            associationCriteriaModel.setCreatedByUUID(usersMap.keySet());
+        }
 
         var associationPage = associationService.getPage(associationCriteriaModel);
 

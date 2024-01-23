@@ -11,38 +11,27 @@ import com.example.demo.domain.user.UserCriteriaModel;
 import com.example.demo.domain.user.UserModelReturn;
 import com.example.demo.domainservices.JobService;
 import com.example.demo.domainservices.UserService;
-import com.example.demo.domainservices.jobStrategies.ExportWriters.AssociationsExportExcelWriter;
 import com.example.demo.domainservices.jobStrategies.ExportWriters.UserExportExcelWriter;
+import com.example.demo.domainservices.jobStrategies.ExportWriters.UserExportWriterInterface;
 import com.example.demo.domainservices.jobStrategies.ExportWriters.WriterInterface;
-import com.example.demo.infrastructure.ExcelUtils;
 import com.example.demo.infrastructure.JsonUtils;
 import io.micrometer.common.util.StringUtils;
 import lombok.extern.log4j.Log4j2;
-import org.apache.poi.ss.usermodel.BorderStyle;
-import org.apache.poi.ss.usermodel.CellStyle;
-import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.ss.util.CellRangeAddress;
-import org.apache.poi.ss.util.RegionUtil;
-import org.apache.poi.xssf.streaming.SXSSFSheet;
-import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.time.format.DateTimeFormatter;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
-import static com.example.demo.infrastructure.ExcelUtils.createCell;
-import static com.example.demo.infrastructure.ExcelUtils.writeHeader;
 
 @Log4j2
 @Component
 public class UserExportJob extends BaseJob {
     private static final String FILE_IS_EMPTY_ERROR_MESSAGE = "Файл результата пуст";
     private static final String FAILED_READ_PARAMS_EXCEPTION_MESSAGE = "Failed to read parameters";
+    private static final String EXCEL_EXTENSION = ".xlsx";
 
     @Autowired
     private UserService userService;
@@ -53,19 +42,31 @@ public class UserExportJob extends BaseJob {
     @Override
     protected void internalRun(JobModelReturn job, ProgressMessageModel progressMessageModel) {
         log.info("UserExportJob started");
-        ExportCriteriaModel criteriaModel = JsonUtils.fromJson(job.getParams(), ExportCriteriaModel.class)
+        ExportCriteriaModel criteriaModel = JsonUtils.readJSON(job.getParams(), ExportCriteriaModel.class)
                 .orElseThrow(() -> new CriticalErrorException(FAILED_READ_PARAMS_EXCEPTION_MESSAGE));
-        var progress = JsonUtils.fromJson(job.getProgress(), ExportProgress.class)
+        var progress = JsonUtils.readJSON(job.getProgress(), ExportProgress.class)
                 .orElse(new ExportProgress(0, 500, 0));
 
-        WriterInterface writer;
+        FileInputStream fileStream;
+        try {
+            var file = new File(job.getJobId().toString());
+            file.createNewFile();
+            fileStream = new FileInputStream(job.getJobId().toString());
+        }
+        catch (Exception e){
+            throw new CriticalErrorException(e.getMessage());
+        }
+        UserExportWriterInterface writer;
         switch (criteriaModel.getFileExtension()) {
-            case ".xlsx":
-                writer = new UserExportExcelWriter();
+            case EXCEL_EXTENSION:
+                writer = new UserExportExcelWriter(fileStream);
                 break;
             default:
                 throw new CriticalErrorException("Unknown file extension");
         }
+
+        writer.preWrite();
+
         PageResult<UserModelReturn> pageResult;
         criteriaModel.setSize(progress.getPageSize());
         criteriaModel.setPageNumber(progress.getLastPage());
@@ -84,12 +85,11 @@ public class UserExportJob extends BaseJob {
 
             progressMessageModel.setSuccessCount(progressMessageModel.getSuccessCount() + pageResult.getPageContent().size());
 
-            job.setProgress(JsonUtils.toJson(progress));
+            job.setProgress(JsonUtils.toString(progress));
             jobService.update(job);
         } while (pageResult.getPageContent().size() == criteriaModel.getSize());
-        if (criteriaModel.getFileExtension() == "xlsx") {
-            ((UserExportExcelWriter)writer).doBorders();
-        }
+
+        writer.postWrite();
 
         try {
             FileOutputStream fos = new FileOutputStream(job.getJobId().toString());
@@ -114,18 +114,11 @@ public class UserExportJob extends BaseJob {
         var userCriteriaModel = new UserCriteriaModel();
         userCriteriaModel.setPageNumber(criteriaModel.getPageNumber());
         userCriteriaModel.setSize(criteriaModel.getSize());
-        if (StringUtils.isNotBlank(criteriaModel.getByRoleFilter())) {
-            userCriteriaModel.setRoleFilter(criteriaModel.getByRoleFilter());
-        }
-        if (StringUtils.isNotBlank(criteriaModel.getByLoginFilter())) {
-            userCriteriaModel.setLoginFilter(criteriaModel.getByLoginFilter());
-        }
-        if (StringUtils.isNotBlank(criteriaModel.getByFullNameFilter())) {
-            userCriteriaModel.setFullNameFilter(criteriaModel.getByFullNameFilter());
-        }
+        userCriteriaModel.setRoleFilter(criteriaModel.getByRoleFilter());
+        userCriteriaModel.setLoginFilter(criteriaModel.getByLoginFilter());
+        userCriteriaModel.setFullNameFilter(criteriaModel.getByFullNameFilter());
         return userService.getPage(userCriteriaModel);
     }
-
 
 
 }

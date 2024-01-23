@@ -5,7 +5,6 @@ import com.example.demo.domain.exceptions.CriticalErrorException;
 import com.example.demo.domain.exceptions.ErrorException;
 import com.example.demo.domain.job.JobModelReturn;
 import com.example.demo.domain.job.ProgressMessageModel;
-import com.example.demo.domain.job.TaskStatus;
 import com.example.demo.domain.job.TaskType;
 import com.example.demo.domain.job.params.TestParams;
 import com.example.demo.domainservices.JobService;
@@ -38,7 +37,7 @@ public class TestJobImpl extends BaseJob {
 
     public void internalRun(JobModelReturn jobModel, ProgressMessageModel progressMessageModel) throws CriticalErrorException, CancelException, ErrorException {
         DELAY_AFTER_FAIL = Duration.ofMinutes(30);
-        var jobParams = JsonUtils.fromJson(jobModel.getParams(), TestParams.class)
+        var jobParams = JsonUtils.readJSON(jobModel.getParams(), TestParams.class)
                 .orElseThrow(() -> new CriticalErrorException(FAILED_READ_PARAMS_EXCEPTION_MESSAGE));
 
         progressMessageModel.setAllCount(jobParams.getWorkCount());
@@ -48,7 +47,7 @@ public class TestJobImpl extends BaseJob {
                     jobModel.getJobId(),
                     jobModel.getAttemptNum(),
                     jobModel.getTaskType(),
-                    JsonUtils.toJson(jobParams),
+                    JsonUtils.toString(jobParams),
                     i));
             try {
                 TimeUnit.MILLISECONDS.sleep(2000);
@@ -60,8 +59,8 @@ public class TestJobImpl extends BaseJob {
                 throw new CancelException();
             }
             progressMessageModel.setSuccessCount(progressMessageModel.getSuccessCount() + 1);
-            jobModel.setProgressMessage(JsonUtils.toJson(progressMessageModel));
-            jobModel.setProgress(JsonUtils.toJson(progressMessageModel));
+            jobModel.setProgressMessage(JsonUtils.toString(progressMessageModel));
+            jobModel.setProgress(JsonUtils.toString(progressMessageModel));
             jobService.update(jobModel);
         }
 

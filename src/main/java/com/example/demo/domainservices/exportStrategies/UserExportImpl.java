@@ -29,7 +29,7 @@ public class UserExportImpl implements ExportInterface {
     public GuidResultModel export(ExportCriteriaModel criteriaModel) {
         var jobModel = new JobModelPost();
         jobModel.setTaskType(TaskType.USER_EXPORT);
-        jobModel.setParams(JsonUtils.toJson(criteriaModel));
+        jobModel.setParams(JsonUtils.toString(criteriaModel));
         return jobService.addNew(jobModel);
     }
 

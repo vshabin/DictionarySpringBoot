@@ -1,16 +1,16 @@
 package com.example.demo.domainservices.jobStrategies.ExportWriters;
 
-import com.example.demo.domain.export.AssociationsExportModel;
 import com.example.demo.domain.user.UserModelReturn;
 import com.example.demo.infrastructure.ExcelUtils;
-import org.apache.poi.ss.usermodel.BorderStyle;
-import org.apache.poi.ss.usermodel.CellStyle;
-import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.ss.util.RegionUtil;
 import org.apache.poi.xssf.streaming.SXSSFSheet;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.time.format.DateTimeFormatter;
@@ -20,12 +20,12 @@ import java.util.List;
 import static com.example.demo.infrastructure.ExcelUtils.createCell;
 import static com.example.demo.infrastructure.ExcelUtils.writeHeader;
 
-public class UserExportExcelWriter implements WriterInterface{
-    private final SXSSFWorkbook workbook;
-    private final HashMap<String, SXSSFSheet> sheets;
+public class UserExportExcelWriter implements UserExportWriterInterface {
+    private Workbook workbook;
+    private final HashMap<String, Sheet> sheets;
     private final CellStyle defaultStyle;
     private final CellStyle boldStyle;
-    private DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy HH-mm");
+    private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy HH-mm");
     private final List<String> HEADERS = List.of(
             "Логин",
             "ФИО",
@@ -33,36 +33,45 @@ public class UserExportExcelWriter implements WriterInterface{
             "Дата добавления"
     );
 
-    public UserExportExcelWriter() {
-        workbook = new SXSSFWorkbook();
-        sheets = new HashMap<String, SXSSFSheet>();
+    public UserExportExcelWriter(FileInputStream file) {
+        try{
+            workbook = new XSSFWorkbook(file);
+        }
+        catch (Exception e) {
+            workbook = new SXSSFWorkbook();
+        }
+        sheets = new HashMap<String, Sheet>();
         defaultStyle = ExcelUtils.getDefaultStyle(workbook);
         boldStyle = ExcelUtils.getBoldStyle(workbook);
     }
 
     @Override
-    public void addData(List<?> modelList) {
-        SXSSFSheet sheet;
-
-        for (UserModelReturn model : (List<UserModelReturn>)modelList) {
+    public void addData(List<UserModelReturn> modelList) {
+        Sheet sheet;
+        for (UserModelReturn model : modelList) {
             var dictName = model.getRole().name();
             sheet = sheets.get(dictName);
             if (sheet == null) {
                 sheet = workbook.createSheet(dictName);
-                sheet.trackAllColumnsForAutoSizing();
-                writeHeader(sheet, boldStyle, HEADERS);
-                for (int i = 0; i < HEADERS.size(); i++) {
-                    sheet.autoSizeColumn(i);
-                    sheet.setColumnWidth(i, sheet.getColumnWidth(i) + 1280);
+                if(sheet instanceof SXSSFSheet){
+                    ((SXSSFSheet)sheet).trackAllColumnsForAutoSizing();
+                    writeHeader(sheet, boldStyle, HEADERS);
+                    for (int i = 0; i < HEADERS.size(); i++) {
+                        sheet.autoSizeColumn(i);
+                        sheet.setColumnWidth(i, sheet.getColumnWidth(i) + 1280);
+                    }
+                    ((SXSSFSheet)sheet).untrackAllColumnsForAutoSizing();
                 }
-                sheet.untrackAllColumnsForAutoSizing();
+                else {
+                    writeHeader(sheet, boldStyle, HEADERS);
+                }
                 sheets.put(dictName, sheet);
             }
-            write(sheet, model, defaultStyle);
+            writeData(sheet, model, defaultStyle);
         }
     }
 
-    private void write(SXSSFSheet sheet, UserModelReturn model, CellStyle style) {
+    private void writeData(Sheet sheet, UserModelReturn model, CellStyle style) {
         int rowCount = sheet.getLastRowNum() + 1;
 
         Row row = sheet.createRow(rowCount);
@@ -73,14 +82,24 @@ public class UserExportExcelWriter implements WriterInterface{
         createCell(row, cellNum++, model.getCreatedAt() != null ? model.getCreatedAt().format(formatter) : null, style);
     }
 
-    public void doBorders(){
+
+    @Override
+    public void write(OutputStream stream) throws IOException {
+        workbook.write(stream);
+        workbook.close();
+    }
+
+    @Override
+    public void preWrite() {
+
+    }
+
+    @Override
+    public void postWrite() {
         sheets.forEach((key, sheet) -> {
                     CellRangeAddress region = new CellRangeAddress(sheet.getLastRowNum() - 1, sheet.getLastRowNum(), 0, HEADERS.size() - 1);
                     RegionUtil.setBorderBottom(BorderStyle.MEDIUM, region, sheet);
                 }
         );
-    }
-    public void write(OutputStream stream) throws IOException {
-        workbook.write(stream);
     }
 }

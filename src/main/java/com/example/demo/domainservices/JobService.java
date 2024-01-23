@@ -95,7 +95,15 @@ public class JobService {
         modelReturn.setStatus(TaskStatus.NEW);
         return repository.save(modelReturn);
     }
-
+    public GuidResultModel addNew(JobModelPost model, UUID taskId) {
+        var modelReturn = new JobModelReturn();
+        modelReturn.setJobId(taskId);
+        modelReturn.setTaskType(model.getTaskType());
+        modelReturn.setParams(model.getParams());
+        modelReturn.setMinStartTime(model.getMinStartTime());
+        modelReturn.setStatus(TaskStatus.NEW);
+        return repository.save(modelReturn);
+    }
     public JobModelReturn update(JobModelReturn model) {
         return repository.update(model);
     }

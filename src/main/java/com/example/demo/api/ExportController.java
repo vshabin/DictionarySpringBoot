@@ -22,8 +22,6 @@ import java.util.UUID;
 @RequestMapping("/export")
 @Tag(name = "Export", description = "Data export APIs")
 public class ExportController {
-    private static final String FILE_IS_EMPTY_ERROR_CODE = "FILE_IS_EMPTY_ERROR_CODE";
-    private static final String FILE_IS_EMPTY_ERROR_MESSAGE = "Result file is empty";
     @Inject
     private ExportService service;
 
