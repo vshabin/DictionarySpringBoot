@@ -1,5 +1,6 @@
 package com.example.demo.domainservices;
 
+import com.example.demo.config.ProcessorInfo;
 import com.example.demo.domain.common.GuidResultModel;
 import com.example.demo.domain.job.JobModelPost;
 import com.example.demo.domain.job.JobModelReturn;
@@ -28,43 +29,54 @@ import java.util.stream.Collectors;
 @Service
 @Log4j2
 public class JobService {
+
     private final static String ATTEMPTS_ARE_OVER_ERROR_MESSAGE = "Task failed too many times. We finish its execution";
     private final static String NO_SUCH_STRATEGY_ERROR_MESSAGE = "No such strategy";
     private final Map<TaskType, JobInterface> strategies;
+
     @Autowired
-    JobRepository repository;
+    private JobRepository repository;
 
     @Qualifier("jobs")
     @Autowired
-    ThreadPoolTaskExecutor executor;
+    private ThreadPoolTaskExecutor executor;
+
+    @Autowired
+    private ProcessorInfo processorInfo;
 
     public JobService(Collection<JobInterface> jobImpls) {
         this.strategies = jobImpls.stream().collect(Collectors.toMap(JobInterface::getType, Function.identity()));
     }
 
-    @Scheduled(fixedRate = 10000, initialDelay = 1000)
+    @Scheduled(fixedRate = 1000, initialDelay = 1000)
     private void checkJobs() {
-        var jobs = repository.getUnfinishedJobs();
+        var threadCount = executor.getCorePoolSize() - executor.getActiveCount();
+        if (threadCount == 0) {
+            return;
+        }
+        var jobs = repository.getJobsForExecute(threadCount);
+        jobs.forEach(
+                job -> job.setProcessor(processorInfo.getComputerName())
+        );
+        repository.updateList(jobs);
         for (JobModelReturn job : jobs) {
-            if (executor.getQueueCapacity() - executor.getQueueSize() > 0) {
-                var strategy = strategies.get(job.getTaskType());
-                if (strategy == null) {
-                    job.setStatus(TaskStatus.FAILED);
-                    job.setTaskErrorMessage(NO_SUCH_STRATEGY_ERROR_MESSAGE);
-                    continue;
-                }
-                job.setAttemptNum(job.getAttemptNum() + 1);
-                if (job.getAttemptNum() > strategy.getMaxAttempt()) {
-                    job.setStatus(TaskStatus.ATTEMPTS_ARE_OVER);
-                    job.setTaskErrorMessage(ATTEMPTS_ARE_OVER_ERROR_MESSAGE);
-                    continue;
-                }
-                executor.execute(() -> {
-                    SecurityContextHolder.getContext().setAuthentication(CommonUtils.getSchedulerAuth());
-                    strategy.run(job);
-                });
-                job.setStatus(TaskStatus.IS_RUNNING);
+            var strategy = strategies.get(job.getTaskType());
+            if (strategy == null) {
+                job.setStatus(TaskStatus.FAILED);
+                job.setTaskErrorMessage(NO_SUCH_STRATEGY_ERROR_MESSAGE);
+                continue;
             }
+            job.setAttemptNum(job.getAttemptNum() + 1);
+            if (job.getAttemptNum() > strategy.getMaxAttempt()) {
+                job.setStatus(TaskStatus.ATTEMPTS_ARE_OVER);
+                job.setTaskErrorMessage(ATTEMPTS_ARE_OVER_ERROR_MESSAGE);
+                continue;
+            }
+            executor.execute(() -> {
+                SecurityContextHolder.getContext().setAuthentication(CommonUtils.getSchedulerAuth());
+                strategy.run(job);
+            });
+            job.setStatus(TaskStatus.IS_RUNNING);
         }
         repository.updateList(jobs);
 
@@ -96,6 +108,7 @@ public class JobService {
         modelReturn.setStatus(TaskStatus.NEW);
         return repository.save(modelReturn);
     }
+
     public GuidResultModel addNew(JobModelPost model, UUID taskId) {
         var modelReturn = new JobModelReturn();
         modelReturn.setJobId(taskId);
@@ -105,6 +118,7 @@ public class JobService {
         modelReturn.setStatus(TaskStatus.NEW);
         return repository.save(modelReturn);
     }
+
     public JobModelReturn update(JobModelReturn model) {
         return repository.update(model);
     }

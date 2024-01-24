@@ -1,4 +1,4 @@
-package com.example.demo;
+package com.example.demo.config;
 
 import com.example.demo.domainservices.TelegramBot;
 import com.example.demo.infrastructure.repositories.DbServer;
@@ -28,7 +28,6 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.meta.generics.LongPollingBot;
 import org.telegram.telegrambots.updatesreceivers.DefaultBotSession;
 
-import javax.inject.Inject;
 import java.util.logging.Logger;
 
 @Component

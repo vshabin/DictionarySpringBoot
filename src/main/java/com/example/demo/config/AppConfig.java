@@ -1,4 +1,4 @@
-package com.example.demo;
+package com.example.demo.config;
 
 import com.example.demo.infrastructure.repositories.DbServer;
 import com.example.demo.security.UserProvider;
@@ -30,13 +30,17 @@ import java.util.logging.Logger;
 @Configuration
 @EnableScheduling
 public class AppConfig {
+    @Value("${threads.poolSize}")
+    private int poolSize;
+    @Value("${threads.queueCapacity}")
+    private int queueCapacity;
     @Bean
     @Qualifier("jobs")
     public ThreadPoolTaskExecutor taskExecutor() {
         ThreadPoolTaskExecutor pool = new ThreadPoolTaskExecutor();
-        pool.setCorePoolSize(10);
-        pool.setMaxPoolSize(10);
-        pool.setQueueCapacity(200);
+        pool.setCorePoolSize(poolSize);
+        pool.setMaxPoolSize(poolSize);
+        pool.setQueueCapacity(queueCapacity);
         pool.setWaitForTasksToCompleteOnShutdown(true);
         return pool;
     }

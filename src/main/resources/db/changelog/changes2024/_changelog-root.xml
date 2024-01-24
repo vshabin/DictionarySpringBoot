@@ -12,4 +12,5 @@
     <include file="db/changelog/changes2024/20240118-3-crontasks-table.xml"/>
     <include file="db/changelog/changes2024/20240118-4-crontasks-table.xml"/>
     <include file="db/changelog/changes2024/20240118-5-crontasks-table.xml"/>
+    <include file="db/changelog/changes2024/20240124-jobs-table.xml"/>
 </databaseChangeLog>

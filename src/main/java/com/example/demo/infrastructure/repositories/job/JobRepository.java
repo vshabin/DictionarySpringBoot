@@ -1,5 +1,6 @@
 package com.example.demo.infrastructure.repositories.job;
 
+import com.example.demo.config.ProcessorInfo;
 import com.example.demo.domain.common.GuidResultModel;
 import com.example.demo.domain.job.JobModelReturn;
 import com.example.demo.domain.job.TaskStatus;
@@ -8,6 +9,7 @@ import com.example.demo.infrastructure.repositories.DbServer;
 import com.example.demo.infrastructure.repositories.MapperInterfaces.JobMapper;
 import io.ebean.annotation.Transactional;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
 import javax.inject.Inject;
@@ -21,10 +23,12 @@ import java.util.UUID;
 public class JobRepository {
     private final String DATABASE_TRANSACTION_ERROR_CODE = "DATABASE_TRANSACTION_ERROR";
     private final String DATABASE_TRANSACTION_ERROR_MESSAGE = "Ошибка проведения транзакции: ";
-    @Inject
-    DbServer dbServer;
-    @Inject
-    JobMapper mapStructMapper;
+    @Autowired
+    private DbServer dbServer;
+    @Autowired
+    private JobMapper mapStructMapper;
+    @Autowired
+    private ProcessorInfo processorInfo;
 
     public JobModelReturn findById(UUID id) {
         var entity = dbServer.getDB().find(JobEntity.class).where().eq(JobEntity.JOB_ID, id).findOne();
@@ -74,7 +78,8 @@ public class JobRepository {
         var result = dbServer.getDB()
                 .find(JobEntity.class)
                 .where()
-                .eq(JobEntity.STATUS, TaskStatus.IS_RUNNING.name())
+                .eq(JobEntity.STATUS, TaskStatus.IS_RUNNING)
+                .eq(JobEntity.PROCESSOR, processorInfo.getComputerName())
                 .findList();
         return mapStructMapper.toJobModelReturnList(result);
     }
@@ -97,7 +102,7 @@ public class JobRepository {
         if (entity == null) {
             return false;
         }
-        return entity.getStatus().equals(TaskStatus.CANCELED.name());
+        return entity.getStatus().equals(TaskStatus.CANCELED);
     }
 
     @Transactional
@@ -107,9 +112,9 @@ public class JobRepository {
                     .find(JobEntity.class)
                     .where()
                     .eq(JobEntity.JOB_ID, id)
-                    .in(JobEntity.STATUS, TaskStatus.FAILED.name(), TaskStatus.IS_RUNNING.name(), TaskStatus.NEW.name())
+                    .in(JobEntity.STATUS, TaskStatus.FAILED, TaskStatus.IS_RUNNING, TaskStatus.NEW)
                     .asUpdate()
-                    .set(JobEntity.STATUS, TaskStatus.CANCELED.name())
+                    .set(JobEntity.STATUS, TaskStatus.CANCELED)
                     .update();
         } catch (Exception e) {
             log.error(e.getMessage(), e);
@@ -122,8 +127,29 @@ public class JobRepository {
         return dbServer.getDB()
                 .find(JobEntity.class)
                 .where()
-                .eq(JobEntity.TASK_TYPE, taskName.name())
+                .eq(JobEntity.TASK_TYPE, taskName)
                 .eq(JobEntity.MIN_START_TIME, next)
                 .exists();
+    }
+
+    public List<JobModelReturn> getJobsForExecute(int threadCount) {
+        var result = dbServer.getDB()
+                .find(JobEntity.class)
+                .where()
+                .in(JobEntity.STATUS, TaskStatus.FAILED, TaskStatus.NEW)
+
+                .or()
+                .isNull(JobEntity.MIN_START_TIME)
+                .le(JobEntity.MIN_START_TIME, LocalDateTime.now())
+                .endOr()
+
+                .or()
+                .isNull(JobEntity.PROCESSOR)
+                .eq(JobEntity.PROCESSOR, processorInfo.getComputerName())
+                .endOr()
+
+                .setMaxRows(threadCount)
+                .findList();
+        return mapStructMapper.toJobModelReturnList(result);
     }
 }

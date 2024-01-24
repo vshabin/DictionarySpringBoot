@@ -1,5 +1,6 @@
 package com.example.demo.domainservices.jobStrategies;
 
+import com.example.demo.config.ProcessorInfo;
 import com.example.demo.domain.exceptions.CancelException;
 import com.example.demo.domain.exceptions.CriticalErrorException;
 import com.example.demo.domain.exceptions.ErrorException;
@@ -26,6 +27,8 @@ public abstract class BaseJob implements JobInterface {
     private JobService jobService;
     @Autowired
     private TelegramBot telegramBot;
+    @Autowired
+    private ProcessorInfo processorInfo;
 
     @Override
     public final void run(JobModelReturn jobModel) {
@@ -34,6 +37,7 @@ public abstract class BaseJob implements JobInterface {
         try {
             internalRun(jobModel, progressMessageModel);
             jobModel.setStatus(TaskStatus.SUCCESS);
+            jobModel.setProcessor(null);
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             jobModel.setTaskErrorMessage(e.getMessage());

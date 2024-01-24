@@ -19,6 +19,7 @@ public class JobModelReturn extends GeneralResultModel {
     private String progressMessage;
     private String progress;
     private String params;
+    private String processor;
     private LocalDateTime lastUpdateTime;
     private LocalDateTime minStartTime;
     private LocalDateTime createdAt;

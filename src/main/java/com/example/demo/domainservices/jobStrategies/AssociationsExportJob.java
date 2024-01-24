@@ -112,6 +112,7 @@ public class AssociationsExportJob extends BaseJob {
                 progressMessageModel.setSuccessCount(progressMessageModel.getSuccessCount() + pageResult.getPageContent().size());
 
                 job.setProgress(JsonUtils.toString(progress));
+                job.setProgressMessage(JsonUtils.toString(progressMessageModel));
                 jobService.update(job);
             }
             while (pageResult.getPageContent().size() == criteriaModel.getSize());

@@ -29,6 +29,9 @@ public class ExportController {
     @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Export data", description = "Export data to .xlsx file")
     public GuidResultModel export(@Valid @RequestBody ExportCriteriaModel criteriaModel){
+        for(int i = 0; i < 5; i++) {
+            service.export(criteriaModel);
+        }
         return service.export(criteriaModel);
     }
     @GetMapping(value = "/get/{jobId}")

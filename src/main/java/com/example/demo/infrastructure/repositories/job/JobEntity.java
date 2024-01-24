@@ -28,6 +28,7 @@ public class JobEntity {
     public static final String LAST_UPDATE_TIME = "lastUpdateTime";
     public static final String MIN_START_TIME = "minStartTime";
     public static final String CREATED_AT = "created_at";
+    public static final String PROCESSOR = "processor";
 
     @Id
     @Column(name = JOB_ID)
@@ -72,5 +73,8 @@ public class JobEntity {
     @Column(name = CREATED_AT)
     @WhenCreated
     private LocalDateTime createdAt;
+
+    @Column(name = PROCESSOR)
+    private String processor;
 
 }
