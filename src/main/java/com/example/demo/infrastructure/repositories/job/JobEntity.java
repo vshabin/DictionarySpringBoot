@@ -1,5 +1,6 @@
 package com.example.demo.infrastructure.repositories.job;
 
+import com.example.demo.domain.job.TaskStatus;
 import io.ebean.annotation.WhenCreated;
 import io.ebean.annotation.WhenModified;
 import io.ebean.annotation.WhoCreated;
@@ -7,10 +8,7 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import javax.persistence.*;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -43,9 +41,10 @@ public class JobEntity {
     @WhoCreated
     private UUID creatorUserId;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = STATUS)
     @NotBlank
-    private String status;
+    private TaskStatus status;
 
     @Column(name = ERROR_MESSAGE)
     private String taskErrorMessage;

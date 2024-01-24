@@ -1,11 +1,13 @@
 package com.example.demo.security;
 
 import com.example.demo.domain.common.GeneralResultModel;
+import com.example.demo.domainservices.TelegramBot;
 import com.example.demo.infrastructure.JsonUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
@@ -25,10 +27,14 @@ public class ApplicationExceptionHandler {
     static final String NO_ACCESS_TOKEN_ERROR_CODE = "NO_ACCESS_TOKEN_ERROR";
     static final String NO_ACCESS_TOKEN_ERROR_MESSAGE = "Access token wasn't found";
     static final String UNKNOWN_ERROR = "UNKNOWN_ERROR";
+    @Autowired
+    private TelegramBot telegramBot;
 
     @ExceptionHandler(value = Exception.class)
     public void processUncaughtApplicationException(HttpServletRequest req, HttpServletResponse response, Exception e) throws IOException {
         log.error(e.getMessage(),e);
+        telegramBot.sendMessage(e.getMessage());
+
         var errorMessage = e.getMessage();
         var errorCode = UNKNOWN_ERROR;
         if (e instanceof MethodArgumentTypeMismatchException) {

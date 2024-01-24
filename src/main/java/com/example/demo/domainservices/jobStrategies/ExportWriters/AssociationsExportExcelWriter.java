@@ -81,17 +81,26 @@ public class AssociationsExportExcelWriter implements AssociationsExportWriterIn
         int rowCount = sheet.getLastRowNum() + 1;
 
         Row row = sheet.createRow(rowCount);
-        var cellNum = 0;
-        createCell(row, cellNum++, model.getWord() != null ? model.getWord().getWord() : null, style);
-        createCell(row, cellNum++, model.getTranslation() != null ? model.getTranslation().getWord() : null, style);
-        createCell(row, cellNum++, model.getCreatedAt() != null ? model.getCreatedAt().format(formatter) : null, style);
-        //createCell(row, cellNum++, model.getUser() != null ? model.getUser().getFullName() : null, style);
-        createCell(row, cellNum++, model.getUser().getFullName() , style);
-        createCell(row, cellNum++, model.getUser().getLogin(), style);
-        createCell(row, cellNum++, model.getUser() != null ? model.getUser().getRole().name() : null, style);
-        CellRangeAddress region = new CellRangeAddress(sheet.getLastRowNum() - 1, sheet.getLastRowNum(), 0, HEADERS.size() - 1);
-        RegionUtil.setBorderLeft(BorderStyle.MEDIUM, region, sheet);
-        RegionUtil.setBorderRight(BorderStyle.MEDIUM, region, sheet);
+        try{
+            var cellNum = 0;
+            createCell(row, cellNum++, model.getWord() != null ? model.getWord().getWord() : null, style);
+            createCell(row, cellNum++, model.getTranslation() != null ? model.getTranslation().getWord() : null, style);
+            createCell(row, cellNum++, model.getCreatedAt() != null ? model.getCreatedAt().format(formatter) : null, style);
+            //createCell(row, cellNum++, model.getUser() != null ? model.getUser().getFullName() : null, style);
+            createCell(row, cellNum++, model.getUser().getFullName() , style);
+            createCell(row, cellNum++, model.getUser().getLogin(), style);
+            createCell(row, cellNum++, model.getUser() != null ? model.getUser().getRole().name() : null, style);
+            CellRangeAddress region = new CellRangeAddress(sheet.getLastRowNum() - 1, sheet.getLastRowNum(), 0, HEADERS.size() - 1);
+            RegionUtil.setBorderLeft(BorderStyle.MEDIUM, region, sheet);
+            RegionUtil.setBorderRight(BorderStyle.MEDIUM, region, sheet);
+        } catch (Exception e) {
+            for(int i = 0; i <HEADERS.size();i++){
+                row.removeCell(row.getCell(i));
+            }
+            sheet.removeRow(row);
+            throw e;
+        }
+
     }
 
     @Override

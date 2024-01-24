@@ -33,6 +33,7 @@ public class JobService {
     private final Map<TaskType, JobInterface> strategies;
     @Autowired
     JobRepository repository;
+
     @Qualifier("jobs")
     @Autowired
     ThreadPoolTaskExecutor executor;
@@ -53,7 +54,7 @@ public class JobService {
                     continue;
                 }
                 job.setAttemptNum(job.getAttemptNum() + 1);
-                if (job.getAttemptNum() >= strategy.getMaxAttempt()) {
+                if (job.getAttemptNum() > strategy.getMaxAttempt()) {
                     job.setStatus(TaskStatus.ATTEMPTS_ARE_OVER);
                     job.setTaskErrorMessage(ATTEMPTS_ARE_OVER_ERROR_MESSAGE);
                     continue;

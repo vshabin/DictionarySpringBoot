@@ -60,7 +60,7 @@ public class JobRepository {
         var result = dbServer.getDB()
                 .find(JobEntity.class)
                 .where()
-                .in(JobEntity.STATUS, TaskStatus.FAILED.name(), TaskStatus.NEW.name())
+                .in(JobEntity.STATUS, TaskStatus.FAILED, TaskStatus.NEW)
                 .or()
                 .isNull(JobEntity.MIN_START_TIME)
                 .le(JobEntity.MIN_START_TIME, LocalDateTime.now())

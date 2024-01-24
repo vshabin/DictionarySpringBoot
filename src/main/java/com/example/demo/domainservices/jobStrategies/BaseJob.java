@@ -7,6 +7,7 @@ import com.example.demo.domain.job.JobModelReturn;
 import com.example.demo.domain.job.ProgressMessageModel;
 import com.example.demo.domain.job.TaskStatus;
 import com.example.demo.domainservices.JobService;
+import com.example.demo.domainservices.TelegramBot;
 import com.example.demo.infrastructure.JsonUtils;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,6 +24,8 @@ public abstract class BaseJob implements JobInterface {
     @Autowired
     @Lazy
     private JobService jobService;
+    @Autowired
+    private TelegramBot telegramBot;
 
     @Override
     public final void run(JobModelReturn jobModel) {
@@ -42,6 +45,7 @@ public abstract class BaseJob implements JobInterface {
             } else if (e instanceof CancelException) {
                 jobModel.setStatus(TaskStatus.CANCELED);
             } else {
+                telegramBot.sendMessage(e.getMessage());
                 jobModel.setStatus(TaskStatus.FAILED);
                 jobModel.setMinStartTime(LocalDateTime.now().plus(DELAY_AFTER_FAIL));
             }

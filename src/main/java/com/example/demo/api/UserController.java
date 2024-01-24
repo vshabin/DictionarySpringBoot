@@ -30,7 +30,9 @@ public class UserController {
     @GetMapping(value = "/searchById/{id}")
     @PreAuthorize("hasAuthority('ADMIN')")
     @Operation(summary = "Get a user by id", description = "Returns a user as per the id or null")
-    public UserModelReturn getById(@PathVariable @Parameter(name = "User UUID", description = "User id", example = "1e723432-ed5e-420e-9cf8-3a51ff669735") UUID id) {
+    public UserModelReturn getById(@PathVariable @Parameter(name = "User UUID",
+            description = "User id",
+            example = "1e723432-ed5e-420e-9cf8-3a51ff669735") UUID id) {
          return service.getById(id);
     }
 

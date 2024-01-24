@@ -87,7 +87,6 @@ public class AssociationsExportJob extends BaseJob {
 
         PageResult<AssociationsExportModel> pageResult;
         criteriaModel.setSize(progress.getPageSize());
-        criteriaModel.setPageNumber(progress.getLastPage()+1);
         try {
             do {
                 progress.setLastPage(progress.getLastPage() + 1);
@@ -123,7 +122,7 @@ public class AssociationsExportJob extends BaseJob {
                 writer.write(fos);
             } catch (Exception ex) {
                 log.error(ex.getMessage(), ex);
-                //throw new CriticalErrorException(ex.getMessage());
+
             }
         }
 

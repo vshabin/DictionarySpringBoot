@@ -39,7 +39,11 @@ public class UserRepository {
     }
 
     public boolean exists(String login) {
-        return dbServer.getDB().find(UserEntity.class).where().eq(UserEntity.LOGIN, login).exists();
+        return dbServer.getDB()
+                .find(UserEntity.class)
+                .where()
+                .eq(UserEntity.LOGIN, login)
+                .exists();
     }
 
     @Transactional
@@ -55,7 +59,12 @@ public class UserRepository {
     }
 
     public String getEncodedPassword(String login) {
-        return dbServer.getDB().find(UserEntity.class).select(UserEntity.PASSWORD).where().eq(UserEntity.LOGIN, login).findSingleAttribute();
+        return dbServer.getDB()
+                .find(UserEntity.class)
+                .select(UserEntity.PASSWORD)
+                .where()
+                .eq(UserEntity.LOGIN, login)
+                .findSingleAttribute();
     }
 
     public List<UserModelReturn> getUserListByIdList(List<UUID> ids){
