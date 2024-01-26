@@ -6,6 +6,7 @@ import com.example.demo.domain.job.JobModelPost;
 import com.example.demo.domain.job.JobModelReturn;
 import com.example.demo.domain.job.TaskStatus;
 import com.example.demo.domain.job.TaskType;
+import com.example.demo.domain.user.UserCredentials;
 import com.example.demo.domainservices.jobStrategies.JobInterface;
 import com.example.demo.infrastructure.CommonUtils;
 import com.example.demo.infrastructure.repositories.job.JobRepository;
@@ -20,9 +21,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.Collection;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -32,6 +31,8 @@ public class JobService {
 
     private final static String ATTEMPTS_ARE_OVER_ERROR_MESSAGE = "Task failed too many times. We finish its execution";
     private final static String NO_SUCH_STRATEGY_ERROR_MESSAGE = "No such strategy";
+    private final static String JOB_ALREADY_EXIST_ERROR_CODE = "JOB_ALREADY_EXIST_ERROR_CODE";
+    private final static String JOB_ALREADY_EXIST_ERROR_MESSAGE = "Job with same task already exists";
     private final Map<TaskType, JobInterface> strategies;
 
     @Autowired
@@ -48,13 +49,15 @@ public class JobService {
         this.strategies = jobImpls.stream().collect(Collectors.toMap(JobInterface::getType, Function.identity()));
     }
 
-    @Scheduled(fixedRate = 1000, initialDelay = 1000)
+    @Scheduled(fixedRate = 5000, initialDelay = 1000)
     private void checkJobs() {
         var threadCount = executor.getCorePoolSize() - executor.getActiveCount();
         if (threadCount == 0) {
             return;
         }
-        var jobs = repository.getJobsForExecute(threadCount);
+
+        //var except = strategies.keySet().stream().filter(taskType ->!taskType.isParallelize()).toList();
+        var jobs = repository.getJobsForExecuteExcept(threadCount);
         jobs.forEach(
                 job -> job.setProcessor(processorInfo.getComputerName())
         );
@@ -64,12 +67,14 @@ public class JobService {
             if (strategy == null) {
                 job.setStatus(TaskStatus.FAILED);
                 job.setTaskErrorMessage(NO_SUCH_STRATEGY_ERROR_MESSAGE);
+                job.setContext(null);
                 continue;
             }
             job.setAttemptNum(job.getAttemptNum() + 1);
             if (job.getAttemptNum() > strategy.getMaxAttempt()) {
                 job.setStatus(TaskStatus.ATTEMPTS_ARE_OVER);
                 job.setTaskErrorMessage(ATTEMPTS_ARE_OVER_ERROR_MESSAGE);
+                job.setContext(null);
                 continue;
             }
             executor.execute(() -> {
@@ -84,7 +89,7 @@ public class JobService {
 
     @EventListener(ApplicationReadyEvent.class)
     private void rerunIsRunning() {
-        var jobs = repository.getIsRunning();
+        var jobs = repository.getIsRunningOfProcessor();
         for (JobModelReturn job : jobs) {
             var strategy = strategies.get(job.getTaskType());
             if (strategy == null) {
@@ -106,6 +111,9 @@ public class JobService {
         modelReturn.setParams(model.getParams());
         modelReturn.setMinStartTime(model.getMinStartTime());
         modelReturn.setStatus(TaskStatus.NEW);
+        if(!model.getTaskType().isParallelize()){
+            modelReturn.setContext(model.getTaskType().name() + " : " +  CommonUtils.getUserId());
+        }
         return repository.save(modelReturn);
     }
 

@@ -12,7 +12,7 @@ import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
-import javax.inject.Inject;
+import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -64,7 +64,7 @@ public class JobRepository {
         var result = dbServer.getDB()
                 .find(JobEntity.class)
                 .where()
-                .in(JobEntity.STATUS, TaskStatus.FAILED, TaskStatus.NEW)
+                .in(JobEntity.STATUS, TaskStatus.FAILED, TaskStatus.IS_RUNNING)
                 .or()
                 .isNull(JobEntity.MIN_START_TIME)
                 .le(JobEntity.MIN_START_TIME, LocalDateTime.now())
@@ -74,12 +74,21 @@ public class JobRepository {
         return mapStructMapper.toJobModelReturnList(result);
     }
 
-    public List<JobModelReturn> getIsRunning() {
+    public List<JobModelReturn> getIsRunningOfProcessor() {
         var result = dbServer.getDB()
                 .find(JobEntity.class)
                 .where()
                 .eq(JobEntity.STATUS, TaskStatus.IS_RUNNING)
                 .eq(JobEntity.PROCESSOR, processorInfo.getComputerName())
+                .findList();
+        return mapStructMapper.toJobModelReturnList(result);
+    }
+
+    public List<JobModelReturn> getAllIsRunning() {
+        var result = dbServer.getDB()
+                .find(JobEntity.class)
+                .where()
+                .eq(JobEntity.STATUS, TaskStatus.IS_RUNNING)
                 .findList();
         return mapStructMapper.toJobModelReturnList(result);
     }
@@ -132,23 +141,114 @@ public class JobRepository {
                 .exists();
     }
 
-    public List<JobModelReturn> getJobsForExecute(int threadCount) {
+//      ДЛЯ ПОТОМКОВ
+//    public List<JobModelReturn> getJobsForExecuteExcept(int threadCount, List<TaskType> except) {
+//        var req = "SELECT \"jobId\", \"taskType\", \"creatorUserId\", status, \"errorMessage\", \"attemptNum\", \"progressMessage\", progress, params, \"lastUpdateTime\", \"minStartTime\", created_at, processor FROM (\n" +
+//                "SELECT *, row_number() over (PARTITION BY \"taskType\", \"creatorUserId\" order by created_at) as row\n" +
+//                "FROM jobs\n" +
+//                "WHERE status = 'NEW'\n" +
+//                "OR status = 'FAILED'\n" +
+//                "AND \"taskType\" IN (:except)\n" +
+//                "and (\"taskType\", \"creatorUserId\") not in (SELECT \"taskType\", \"creatorUserId\"\n" +
+//                "FROM jobs\n" +
+//                "WHERE status = 'IS_RUNNING'\n" +
+//                "AND \"taskType\" IN (:except)\n" +
+//                "GROUP BY \"taskType\", \"creatorUserId\")) as a\n" +
+//                "WHERE row = 1\n" +
+//                "\n" +
+//                "UNION\n" +
+//                "\n" +
+//                "SELECT * FROM jobs\n" +
+//                "WHERE (status = 'NEW' OR status = 'FAILED') AND \"taskType\" NOT IN (:except)";
+//        var rows = dbServer.getDB()
+//                .sqlQuery(req)
+//                .setParameter("except", except)
+//                .setMaxRows(threadCount)
+//                .findList();
+//        List<JobModelReturn> result = new ArrayList<>();
+//        rows.forEach(row -> {
+//            LocalDateTime minStartTime;
+//            if (row.get(JobEntity.MIN_START_TIME) != null) {
+//                minStartTime = ((Timestamp) row.get(JobEntity.LAST_UPDATE_TIME)).toLocalDateTime();
+//            } else {
+//                minStartTime = null;
+//            }
+//            result.add(new JobModelReturn(
+//                    (UUID) row.get(JobEntity.JOB_ID),
+//                    TaskType.valueOf((String) row.get(JobEntity.TASK_TYPE)),
+//                    (UUID) row.get(JobEntity.CREATOR_USER_ID),
+//                    TaskStatus.valueOf((String) row.get(JobEntity.STATUS)),
+//                    (String) row.get(JobEntity.ERROR_MESSAGE),
+//                    (Integer) row.get(JobEntity.ATTEMPT_NUM),
+//                    (String) row.get(JobEntity.PROGRESS_MESSAGE),
+//                    (String) row.get(JobEntity.PROGRESS),
+//                    (String) row.get(JobEntity.PARAMS),
+//                    (String) row.get(JobEntity.PROCESSOR),
+//                    ((Timestamp) row.get(JobEntity.LAST_UPDATE_TIME)).toLocalDateTime(),
+//                    minStartTime,
+//                    ((Timestamp) row.get(JobEntity.CREATED_AT)).toLocalDateTime()
+//
+//            ));
+//        });
+//        return result;
+//    }
+
+    public List<JobModelReturn> getJobsForExecuteExcept(int threadCount) {
+        var req = "SELECT \""+JobEntity.JOB_ID+"\", \""+JobEntity.TASK_TYPE+"\", \""+JobEntity.CREATOR_USER_ID+"\", "+JobEntity.STATUS+", \""+JobEntity.ERROR_MESSAGE+"\", \""+JobEntity.ATTEMPT_NUM+"\", \""+JobEntity.PROGRESS_MESSAGE+"\", "+JobEntity.PROGRESS+", "+JobEntity.PARAMS+", \""+JobEntity.LAST_UPDATE_TIME+"\", \""+JobEntity.MIN_START_TIME+"\", "+JobEntity.CREATED_AT+", "+JobEntity.PROCESSOR+", "+JobEntity.CONTEXT+" FROM (\n" +
+                "SELECT *, row_number() over (PARTITION BY \""+JobEntity.CONTEXT+"\" order by "+JobEntity.CREATED_AT+") as row\n" +
+                "FROM jobs\n" +
+                "WHERE "+JobEntity.STATUS+" IN('"+TaskStatus.NEW+"', '"+TaskStatus.FAILED+"')\n" +
+                "AND "+JobEntity.CONTEXT+" IS NOT NULL\n" +
+                "and \""+JobEntity.CONTEXT+"\" not in (SELECT \""+JobEntity.CONTEXT+"\"\n" +
+                "FROM jobs\n" +
+                "WHERE "+JobEntity.STATUS+" = '"+TaskStatus.IS_RUNNING+"')) as b\n" +
+                "WHERE row = 1\n" +
+                "\n" +
+                "UNION\n" +
+                "\n" +
+                "SELECT * FROM jobs \n" +
+                "WHERE "+JobEntity.CONTEXT+" IS NULL\n" +
+                "AND "+JobEntity.STATUS+" IN('"+TaskStatus.NEW+"', '"+TaskStatus.FAILED+"')";
+
+
+        var rows = dbServer.getDB()
+                .sqlQuery(req)
+                .setMaxRows(threadCount)
+                .findList();
+        List<JobModelReturn> result = new ArrayList<>();
+        rows.forEach(row -> {
+            LocalDateTime minStartTime;
+            if (row.get(JobEntity.MIN_START_TIME) != null) {
+                minStartTime = ((Timestamp) row.get(JobEntity.LAST_UPDATE_TIME)).toLocalDateTime();
+            } else {
+                minStartTime = null;
+            }
+            result.add(new JobModelReturn(
+                    (UUID) row.get(JobEntity.JOB_ID),
+                    TaskType.valueOf((String) row.get(JobEntity.TASK_TYPE)),
+                    (UUID) row.get(JobEntity.CREATOR_USER_ID),
+                    TaskStatus.valueOf((String) row.get(JobEntity.STATUS)),
+                    (String) row.get(JobEntity.ERROR_MESSAGE),
+                    (Integer) row.get(JobEntity.ATTEMPT_NUM),
+                    (String) row.get(JobEntity.PROGRESS_MESSAGE),
+                    (String) row.get(JobEntity.PROGRESS),
+                    (String) row.get(JobEntity.PARAMS),
+                    (String) row.get(JobEntity.PROCESSOR),
+                    (String) row.get(JobEntity.CONTEXT),
+                    ((Timestamp) row.get(JobEntity.LAST_UPDATE_TIME)).toLocalDateTime(),
+                    minStartTime,
+                    ((Timestamp) row.get(JobEntity.CREATED_AT)).toLocalDateTime()
+            ));
+        });
+        return result;
+    }
+
+    public List<JobModelReturn> getJobsByUserId(UUID userId) {
         var result = dbServer.getDB()
                 .find(JobEntity.class)
                 .where()
-                .in(JobEntity.STATUS, TaskStatus.FAILED, TaskStatus.NEW)
-
-                .or()
-                .isNull(JobEntity.MIN_START_TIME)
-                .le(JobEntity.MIN_START_TIME, LocalDateTime.now())
-                .endOr()
-
-                .or()
-                .isNull(JobEntity.PROCESSOR)
-                .eq(JobEntity.PROCESSOR, processorInfo.getComputerName())
-                .endOr()
-
-                .setMaxRows(threadCount)
+                .in(JobEntity.STATUS, TaskStatus.FAILED, TaskStatus.IS_RUNNING)
+                .eq(JobEntity.CREATOR_USER_ID, userId)
                 .findList();
         return mapStructMapper.toJobModelReturnList(result);
     }

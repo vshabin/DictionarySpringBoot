@@ -1,6 +1,7 @@
 package com.example.demo.domain.job;
 
 import com.example.demo.domain.common.GeneralResultModel;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -9,6 +10,7 @@ import java.util.UUID;
 
 @Data
 @NoArgsConstructor
+@AllArgsConstructor
 public class JobModelReturn extends GeneralResultModel {
     private UUID jobId;
     private TaskType taskType;
@@ -20,6 +22,7 @@ public class JobModelReturn extends GeneralResultModel {
     private String progress;
     private String params;
     private String processor;
+    private String context;
     private LocalDateTime lastUpdateTime;
     private LocalDateTime minStartTime;
     private LocalDateTime createdAt;

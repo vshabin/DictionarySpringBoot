@@ -37,6 +37,7 @@ public abstract class BaseJob implements JobInterface {
         try {
             internalRun(jobModel, progressMessageModel);
             jobModel.setStatus(TaskStatus.SUCCESS);
+            jobModel.setContext(null);
             jobModel.setProcessor(null);
         } catch (Exception e) {
             log.error(e.getMessage(), e);
@@ -46,12 +47,12 @@ public abstract class BaseJob implements JobInterface {
                 jobModel.setMinStartTime(LocalDateTime.now().plus(DELAY_AFTER_FAIL));
             } else if (e instanceof CriticalErrorException) {
                 jobModel.setStatus(TaskStatus.CRITICAL_ERROR);
+                jobModel.setContext(null);
             } else if (e instanceof CancelException) {
                 jobModel.setStatus(TaskStatus.CANCELED);
             } else {
                 telegramBot.sendMessage(e.getMessage());
-                jobModel.setStatus(TaskStatus.FAILED);
-                jobModel.setMinStartTime(LocalDateTime.now().plus(DELAY_AFTER_FAIL));
+                jobModel.setStatus(TaskStatus.CRITICAL_ERROR);
             }
         }
         jobModel.setProgressMessage(JsonUtils.toString(progressMessageModel));

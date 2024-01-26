@@ -14,7 +14,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import javax.inject.Inject;
-import java.io.IOException;
 import java.util.UUID;
 
 
@@ -28,15 +27,13 @@ public class ExportController {
     @PostMapping()
     @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Export data", description = "Export data to .xlsx file")
-    public GuidResultModel export(@Valid @RequestBody ExportCriteriaModel criteriaModel){
-        for(int i = 0; i < 5; i++) {
-            service.export(criteriaModel);
-        }
+    public GuidResultModel export(@Valid @RequestBody ExportCriteriaModel criteriaModel) {
         return service.export(criteriaModel);
     }
+
     @GetMapping(value = "/get/{jobId}")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<?> getFile(@PathVariable UUID jobId){
+    public ResponseEntity<?> getFile(@PathVariable UUID jobId) {
         var exportReturnModel = service.getFile(jobId);
         var headers = new HttpHeaders();
         if (exportReturnModel.getErrorCode() != null) {

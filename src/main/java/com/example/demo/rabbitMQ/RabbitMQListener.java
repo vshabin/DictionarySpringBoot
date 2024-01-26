@@ -1,6 +1,6 @@
 package com.example.demo.rabbitMQ;
 
-import com.example.demo.domainservices.TelegramBot;
+//import com.example.demo.domainservices.TelegramBot;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.amqp.rabbit.annotation.EnableRabbit;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
@@ -16,8 +16,8 @@ import static com.example.demo.rabbitMQ.RabbitMQConst.TELEGRAM_QUEUE_NAME;
 @Log4j2
 @EnableRabbit
 public class RabbitMQListener {
-    @Autowired
-    private TelegramBot telegramBot;
+//    @Autowired
+//    private TelegramBot telegramBot;
 
     @RabbitListener(queues = DEFAULT_QUEUE_NAME)
     public void processDefaultMessage(String message) {
@@ -27,6 +27,6 @@ public class RabbitMQListener {
     @RabbitListener(queues = TELEGRAM_QUEUE_NAME)
     public void processTelegramMessage(String message) {
         var resultMessage = String.format("Наши дорогие администраторы хотят сказать всем фанатам : %s !!!", message);
-        telegramBot.sendMessage(resultMessage);
+        //telegramBot.sendMessage(resultMessage);
     }
 }

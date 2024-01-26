@@ -1,6 +1,7 @@
 package com.example.demo.infrastructure.repositories.job;
 
 import com.example.demo.domain.job.TaskStatus;
+import com.example.demo.domain.job.TaskType;
 import io.ebean.annotation.WhenCreated;
 import io.ebean.annotation.WhenModified;
 import io.ebean.annotation.WhoCreated;
@@ -29,14 +30,16 @@ public class JobEntity {
     public static final String MIN_START_TIME = "minStartTime";
     public static final String CREATED_AT = "created_at";
     public static final String PROCESSOR = "processor";
+    public static final String CONTEXT = "context";
 
     @Id
     @Column(name = JOB_ID)
     private UUID jobId;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = TASK_TYPE)
     @NotBlank
-    private String taskType;
+    private TaskType taskType;
 
     @Column(name = CREATOR_USER_ID)
     @WhoCreated
@@ -76,5 +79,8 @@ public class JobEntity {
 
     @Column(name = PROCESSOR)
     private String processor;
+
+    @Column(name = CONTEXT)
+    private String context;
 
 }
