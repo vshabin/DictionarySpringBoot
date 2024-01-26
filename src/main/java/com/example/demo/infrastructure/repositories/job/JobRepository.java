@@ -54,7 +54,6 @@ public class JobRepository {
         try {
             dbServer.getDB().update(entity);
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
             return new JobModelReturn(DATABASE_TRANSACTION_ERROR_CODE, DATABASE_TRANSACTION_ERROR_MESSAGE + e.getMessage());
         }
         return model;
@@ -99,6 +98,7 @@ public class JobRepository {
         var result = new ArrayList<JobModelReturn>();
         try {
             dbServer.getDB().updateAll(entities);
+            result.addAll(mapStructMapper.toJobModelReturnList(entities));
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             result.add(new JobModelReturn(DATABASE_TRANSACTION_ERROR_CODE, DATABASE_TRANSACTION_ERROR_MESSAGE + e.getMessage()));
@@ -141,7 +141,8 @@ public class JobRepository {
                 .exists();
     }
 
-//      ДЛЯ ПОТОМКОВ
+//    ДЛЯ ПОТОМКОВ
+//
 //    public List<JobModelReturn> getJobsForExecuteExcept(int threadCount, List<TaskType> except) {
 //        var req = "SELECT \"jobId\", \"taskType\", \"creatorUserId\", status, \"errorMessage\", \"attemptNum\", \"progressMessage\", progress, params, \"lastUpdateTime\", \"minStartTime\", created_at, processor FROM (\n" +
 //                "SELECT *, row_number() over (PARTITION BY \"taskType\", \"creatorUserId\" order by created_at) as row\n" +
@@ -192,55 +193,68 @@ public class JobRepository {
 //        });
 //        return result;
 //    }
+//
+//
+//    ЕЩЁ ДЛЯ ПОТОМКОВ,
+//    НО ЧУТЬ КРУЧЕ
+//
+//    public List<JobModelReturn> getJobsForExecute(int threadCount) {
+//        var req = "SELECT \"" + JobEntity.JOB_ID + "\", \"" + JobEntity.TASK_TYPE + "\", \"" + JobEntity.CREATOR_USER_ID + "\", " + JobEntity.STATUS + ", \"" + JobEntity.ERROR_MESSAGE + "\", \"" + JobEntity.ATTEMPT_NUM + "\", \"" + JobEntity.PROGRESS_MESSAGE + "\", " + JobEntity.PROGRESS + ", " + JobEntity.PARAMS + ", \"" + JobEntity.LAST_UPDATE_TIME + "\", \"" + JobEntity.MIN_START_TIME + "\", " + JobEntity.CREATED_AT + ", " + JobEntity.PROCESSOR + ", " + JobEntity.CONTEXT + " FROM (\n" +
+//                "SELECT *, row_number() over (PARTITION BY \"" + JobEntity.CONTEXT + "\" order by " + JobEntity.CREATED_AT + ") as row\n" +
+//                "FROM jobs\n" +
+//                "WHERE " + JobEntity.STATUS + " IN('" + TaskStatus.NEW + "', '" + TaskStatus.FAILED + "')\n" +
+//                "AND " + JobEntity.CONTEXT + " IS NOT NULL\n" +
+//                "and \"" + JobEntity.CONTEXT + "\" not in (SELECT \"" + JobEntity.CONTEXT + "\"\n" +
+//                "FROM jobs\n" +
+//                "WHERE " + JobEntity.STATUS + " = '" + TaskStatus.IS_RUNNING + "')) as b\n" +
+//                "WHERE row = 1\n" +
+//                "\n" +
+//                "UNION\n" +
+//                "\n" +
+//                "SELECT * FROM jobs \n" +
+//                "WHERE " + JobEntity.CONTEXT + " IS NULL\n" +
+//                "AND " + JobEntity.STATUS + " IN('" + TaskStatus.NEW + "', '" + TaskStatus.FAILED + "')";
+//
+//        var rows = dbServer.getDB()
+//                .sqlQuery(req)
+//                .setMaxRows(threadCount)
+//                .findList();
+//        List<JobModelReturn> result = new ArrayList<>();
+//        rows.forEach(row -> {
+//            LocalDateTime minStartTime;
+//            if (row.get(JobEntity.MIN_START_TIME) != null) {
+//                minStartTime = ((Timestamp) row.get(JobEntity.LAST_UPDATE_TIME)).toLocalDateTime();
+//            } else {
+//                minStartTime = null;
+//            }
+//            result.add(new JobModelReturn(
+//                    (UUID) row.get(JobEntity.JOB_ID),
+//                    TaskType.valueOf((String) row.get(JobEntity.TASK_TYPE)),
+//                    (UUID) row.get(JobEntity.CREATOR_USER_ID),
+//                    TaskStatus.valueOf((String) row.get(JobEntity.STATUS)),
+//                    (String) row.get(JobEntity.ERROR_MESSAGE),
+//                    (Integer) row.get(JobEntity.ATTEMPT_NUM),
+//                    (String) row.get(JobEntity.PROGRESS_MESSAGE),
+//                    (String) row.get(JobEntity.PROGRESS),
+//                    (String) row.get(JobEntity.PARAMS),
+//                    (String) row.get(JobEntity.PROCESSOR),
+//                    (String) row.get(JobEntity.CONTEXT),
+//                    ((Timestamp) row.get(JobEntity.LAST_UPDATE_TIME)).toLocalDateTime(),
+//                    minStartTime,
+//                    ((Timestamp) row.get(JobEntity.CREATED_AT)).toLocalDateTime()
+//            ));
+//        });
+//        return result;
+//    }
 
-    public List<JobModelReturn> getJobsForExecuteExcept(int threadCount) {
-        var req = "SELECT \""+JobEntity.JOB_ID+"\", \""+JobEntity.TASK_TYPE+"\", \""+JobEntity.CREATOR_USER_ID+"\", "+JobEntity.STATUS+", \""+JobEntity.ERROR_MESSAGE+"\", \""+JobEntity.ATTEMPT_NUM+"\", \""+JobEntity.PROGRESS_MESSAGE+"\", "+JobEntity.PROGRESS+", "+JobEntity.PARAMS+", \""+JobEntity.LAST_UPDATE_TIME+"\", \""+JobEntity.MIN_START_TIME+"\", "+JobEntity.CREATED_AT+", "+JobEntity.PROCESSOR+", "+JobEntity.CONTEXT+" FROM (\n" +
-                "SELECT *, row_number() over (PARTITION BY \""+JobEntity.CONTEXT+"\" order by "+JobEntity.CREATED_AT+") as row\n" +
-                "FROM jobs\n" +
-                "WHERE "+JobEntity.STATUS+" IN('"+TaskStatus.NEW+"', '"+TaskStatus.FAILED+"')\n" +
-                "AND "+JobEntity.CONTEXT+" IS NOT NULL\n" +
-                "and \""+JobEntity.CONTEXT+"\" not in (SELECT \""+JobEntity.CONTEXT+"\"\n" +
-                "FROM jobs\n" +
-                "WHERE "+JobEntity.STATUS+" = '"+TaskStatus.IS_RUNNING+"')) as b\n" +
-                "WHERE row = 1\n" +
-                "\n" +
-                "UNION\n" +
-                "\n" +
-                "SELECT * FROM jobs \n" +
-                "WHERE "+JobEntity.CONTEXT+" IS NULL\n" +
-                "AND "+JobEntity.STATUS+" IN('"+TaskStatus.NEW+"', '"+TaskStatus.FAILED+"')";
-
-
-        var rows = dbServer.getDB()
-                .sqlQuery(req)
+    public List<JobModelReturn> getJobsForExecute(int threadCount) {
+        var result = dbServer.getDB()
+                .find(JobEntity.class)
+                .where()
+                .in(JobEntity.STATUS, TaskStatus.NEW, TaskStatus.FAILED)
                 .setMaxRows(threadCount)
                 .findList();
-        List<JobModelReturn> result = new ArrayList<>();
-        rows.forEach(row -> {
-            LocalDateTime minStartTime;
-            if (row.get(JobEntity.MIN_START_TIME) != null) {
-                minStartTime = ((Timestamp) row.get(JobEntity.LAST_UPDATE_TIME)).toLocalDateTime();
-            } else {
-                minStartTime = null;
-            }
-            result.add(new JobModelReturn(
-                    (UUID) row.get(JobEntity.JOB_ID),
-                    TaskType.valueOf((String) row.get(JobEntity.TASK_TYPE)),
-                    (UUID) row.get(JobEntity.CREATOR_USER_ID),
-                    TaskStatus.valueOf((String) row.get(JobEntity.STATUS)),
-                    (String) row.get(JobEntity.ERROR_MESSAGE),
-                    (Integer) row.get(JobEntity.ATTEMPT_NUM),
-                    (String) row.get(JobEntity.PROGRESS_MESSAGE),
-                    (String) row.get(JobEntity.PROGRESS),
-                    (String) row.get(JobEntity.PARAMS),
-                    (String) row.get(JobEntity.PROCESSOR),
-                    (String) row.get(JobEntity.CONTEXT),
-                    ((Timestamp) row.get(JobEntity.LAST_UPDATE_TIME)).toLocalDateTime(),
-                    minStartTime,
-                    ((Timestamp) row.get(JobEntity.CREATED_AT)).toLocalDateTime()
-            ));
-        });
-        return result;
+        return mapStructMapper.toJobModelReturnList(result);
     }
 
     public List<JobModelReturn> getJobsByUserId(UUID userId) {
@@ -252,4 +266,5 @@ public class JobRepository {
                 .findList();
         return mapStructMapper.toJobModelReturnList(result);
     }
+
 }

@@ -18,5 +18,4 @@ public interface JobMapper {
     List<JobModelReturn> toJobModelReturnList(List<JobEntity> result);
 
     List<JobEntity> toJobEntityList(List<JobModelReturn> jobs);
-    List<JobModelReturn> toJobModelReturnList1(List<SqlRow> jobs);
 }

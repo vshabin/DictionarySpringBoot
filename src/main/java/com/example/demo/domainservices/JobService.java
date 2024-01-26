@@ -6,7 +6,6 @@ import com.example.demo.domain.job.JobModelPost;
 import com.example.demo.domain.job.JobModelReturn;
 import com.example.demo.domain.job.TaskStatus;
 import com.example.demo.domain.job.TaskType;
-import com.example.demo.domain.user.UserCredentials;
 import com.example.demo.domainservices.jobStrategies.JobInterface;
 import com.example.demo.infrastructure.CommonUtils;
 import com.example.demo.infrastructure.repositories.job.JobRepository;
@@ -21,7 +20,11 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -56,12 +59,17 @@ public class JobService {
             return;
         }
 
-        //var except = strategies.keySet().stream().filter(taskType ->!taskType.isParallelize()).toList();
-        var jobs = repository.getJobsForExecuteExcept(threadCount);
-        jobs.forEach(
-                job -> job.setProcessor(processorInfo.getComputerName())
+        var jobsForExecute = repository.getJobsForExecute(threadCount);
+        var jobs = new ArrayList<JobModelReturn>();
+        jobsForExecute.forEach(job -> {
+                    job.setProcessor(processorInfo.getComputerName());
+                    var result = repository.update(job);
+                    if (result.getErrorCode() == null) {
+                        jobs.add(result);
+                    }
+                }
         );
-        repository.updateList(jobs);
+
         for (JobModelReturn job : jobs) {
             var strategy = strategies.get(job.getTaskType());
             if (strategy == null) {
@@ -77,10 +85,14 @@ public class JobService {
                 job.setContext(null);
                 continue;
             }
-            executor.execute(() -> {
+            var future = CompletableFuture.runAsync(() -> {
                 SecurityContextHolder.getContext().setAuthentication(CommonUtils.getSchedulerAuth());
                 strategy.run(job);
-            });
+            }, executor);
+//            executor.execute(() -> {
+//                SecurityContextHolder.getContext().setAuthentication(CommonUtils.getSchedulerAuth());
+//                strategy.run(job);
+//            });
             job.setStatus(TaskStatus.IS_RUNNING);
         }
         repository.updateList(jobs);
@@ -111,8 +123,8 @@ public class JobService {
         modelReturn.setParams(model.getParams());
         modelReturn.setMinStartTime(model.getMinStartTime());
         modelReturn.setStatus(TaskStatus.NEW);
-        if(!model.getTaskType().isParallelize()){
-            modelReturn.setContext(model.getTaskType().name() + " : " +  CommonUtils.getUserId());
+        if (!model.getTaskType().isParallelize()) {
+            modelReturn.setContext(model.getTaskType().name() + " : " + CommonUtils.getUserId());
         }
         return repository.save(modelReturn);
     }
