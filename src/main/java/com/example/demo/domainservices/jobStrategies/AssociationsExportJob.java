@@ -5,10 +5,7 @@ import com.example.demo.domain.common.PageResult;
 import com.example.demo.domain.exceptions.CriticalErrorException;
 import com.example.demo.domain.export.AssociationsExportModel;
 import com.example.demo.domain.export.ExportCriteriaModel;
-import com.example.demo.domain.job.JobModelPost;
-import com.example.demo.domain.job.JobModelReturn;
-import com.example.demo.domain.job.ProgressMessageModel;
-import com.example.demo.domain.job.TaskType;
+import com.example.demo.domain.job.*;
 import com.example.demo.domain.job.progress.ExportProgress;
 import com.example.demo.domain.user.UserCriteriaModel;
 import com.example.demo.domain.user.UserModelReturn;
@@ -42,6 +39,8 @@ public class AssociationsExportJob extends BaseJob {
     private static final String NO_USER_PASSED_FILTER_ERROR_MESSAGE = "Ни один пользователь не прошёл условия фильтра";
     private final String TOO_MANY_USERS_FILTERED_ERROR_CODE = "TOO_MANY_USERS_FILTERED_ERROR_CODE";
     private final String TOO_MANY_USERS_FILTERED_ERROR_MESSAGE = "Слишком много людей было найдено в фильтре";
+    private static final String EMAIL_SUBJECT = "Экспорт ассоциаций";
+    private static final String EMAIL_TEXT = "Ваш экспорт готов";
     private static final String EXCEL_EXTENSION = ".xlsx";
 
 
@@ -127,7 +126,22 @@ public class AssociationsExportJob extends BaseJob {
 
             }
         }
+        if(criteriaModel.isSendEmail()){
+            var sendJob = new JobModelPost();
+            sendJob.setTaskType(TaskType.SEND_EMAIL);
 
+            var params = new SendEmailParams();
+            params.setAttachment(job.getJobId().toString());
+            params.setAttachmentExtension(criteriaModel.getFileExtension());
+
+            params.setTo(userService.getById(job.getCreatorUserId()).getEmail());
+            params.setSubject(EMAIL_SUBJECT);
+            params.setText(EMAIL_TEXT);
+
+            sendJob.setParams(JsonUtils.toString(params));
+
+            jobService.addNew(sendJob);
+        }
         log.info("Finish exporting associations");
     }
 

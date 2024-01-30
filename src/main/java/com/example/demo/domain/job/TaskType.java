@@ -6,7 +6,8 @@ public enum TaskType {
     DICTIONARY_IMPORT_EXCEL(false),
     ASSOCIATIONS_EXPORT(false),
     USER_EXPORT(true),
-    TEST_TASK(true)
+    TEST_TASK(true),
+    SEND_EMAIL(true),
 
 
     ;

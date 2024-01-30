@@ -3,9 +3,7 @@ package com.example.demo.domainservices.jobStrategies;
 import com.example.demo.domain.common.PageResult;
 import com.example.demo.domain.exceptions.CriticalErrorException;
 import com.example.demo.domain.export.ExportCriteriaModel;
-import com.example.demo.domain.job.JobModelReturn;
-import com.example.demo.domain.job.ProgressMessageModel;
-import com.example.demo.domain.job.TaskType;
+import com.example.demo.domain.job.*;
 import com.example.demo.domain.job.progress.ExportProgress;
 import com.example.demo.domain.user.UserCriteriaModel;
 import com.example.demo.domain.user.UserModelReturn;
@@ -32,6 +30,8 @@ public class UserExportJob extends BaseJob {
     private static final String FILE_IS_EMPTY_ERROR_MESSAGE = "Файл результата пуст";
     private static final String FAILED_READ_PARAMS_EXCEPTION_MESSAGE = "Failed to read parameters";
     private static final String EXCEL_EXTENSION = ".xlsx";
+    private static final String EMAIL_SUBJECT = "Экспорт пользователей";
+    private static final String EMAIL_TEXT = "Ваш экспорт готов";
 
     @Autowired
     private UserService userService;
@@ -96,6 +96,23 @@ public class UserExportJob extends BaseJob {
             writer.write(fos);
         } catch (Exception e) {
             throw new CriticalErrorException(e.getMessage());
+        }
+
+        if(criteriaModel.isSendEmail()){
+            var sendJob = new JobModelPost();
+            sendJob.setTaskType(TaskType.SEND_EMAIL);
+
+            var params = new SendEmailParams();
+            params.setAttachment(job.getJobId().toString());
+            params.setAttachmentExtension(criteriaModel.getFileExtension());
+
+            params.setTo(userService.getById(job.getCreatorUserId()).getEmail());
+            params.setSubject(EMAIL_SUBJECT);
+            params.setText(EMAIL_TEXT);
+
+            sendJob.setParams(JsonUtils.toString(params));
+
+            jobService.addNew(sendJob);
         }
         log.info("UserExportJob finished");
     }
