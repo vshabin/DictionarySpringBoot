@@ -30,4 +30,8 @@ public class CommonUtils {
         var authorities = List.of(new SimpleGrantedAuthority(role));
         return new UsernamePasswordAuthenticationToken(user.getUserId(), user, authorities);
     }
+
+    public static String escape(String string, char esc) {
+        return esc + string + esc;
+    }
 }

@@ -2,13 +2,13 @@ package com.example.demo.domainservices;
 
 import com.example.demo.config.ProcessorInfo;
 import com.example.demo.domain.common.GuidResultModel;
-import com.example.demo.domain.job.JobModelPost;
-import com.example.demo.domain.job.JobModelReturn;
-import com.example.demo.domain.job.TaskStatus;
-import com.example.demo.domain.job.TaskType;
+import com.example.demo.domain.common.PageResult;
+import com.example.demo.domain.job.*;
+import com.example.demo.domain.user.UserModelReturn;
 import com.example.demo.domainservices.jobStrategies.JobInterface;
 import com.example.demo.infrastructure.CommonUtils;
 import com.example.demo.infrastructure.repositories.job.JobRepository;
+import io.micrometer.common.util.StringUtils;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -20,10 +20,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -40,6 +37,8 @@ public class JobService {
 
     @Autowired
     private JobRepository repository;
+    @Autowired
+    private UserService userService;
 
     @Qualifier("jobs")
     @Autowired
@@ -153,5 +152,27 @@ public class JobService {
 
     public boolean thereIsSameTask(TaskType taskName, LocalDateTime next) {
         return repository.thereIsSameTask(taskName, next);
+    }
+
+    public PageResult<JobEnrichedModel> criteriaQuery(JobCriteriaModel model) {
+        var returnModels = repository.criteriaQuery(model);
+
+        var usersIds = new HashSet<UUID>();
+        returnModels.getPageContent().forEach(jobModelReturn -> {
+            usersIds.add(jobModelReturn.getCreatorUserId());
+        });
+
+        var usersList = userService.getUserListByIdSet(usersIds);
+        var usersMap = usersList.stream()
+                .collect(Collectors.toMap(UserModelReturn::getId, Function.identity()));
+
+        var jobsEnrichedList = new ArrayList<JobEnrichedModel>();
+        returnModels.getPageContent().forEach(jobModelReturn -> {
+                jobsEnrichedList.add(new JobEnrichedModel(
+                        jobModelReturn,
+                        usersMap.get(jobModelReturn.getCreatorUserId()).getLogin(),
+                        usersMap.get(jobModelReturn.getCreatorUserId()).getRole()));
+        });
+        return new PageResult<JobEnrichedModel>(jobsEnrichedList, returnModels.getTotalCount());
     }
 }

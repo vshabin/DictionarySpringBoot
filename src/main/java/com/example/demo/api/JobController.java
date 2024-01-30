@@ -1,6 +1,9 @@
 package com.example.demo.api;
 
 import com.example.demo.domain.common.GuidResultModel;
+import com.example.demo.domain.common.PageResult;
+import com.example.demo.domain.job.JobCriteriaModel;
+import com.example.demo.domain.job.JobEnrichedModel;
 import com.example.demo.domain.job.JobModelPost;
 import com.example.demo.domain.job.JobModelReturn;
 import com.example.demo.domainservices.JobService;
@@ -35,5 +38,11 @@ public class JobController {
     @PreAuthorize("hasAuthority('ADMIN')")
     public GuidResultModel cancel(@PathVariable UUID id){
         return service.cancel(id);
+    }
+
+    @GetMapping("/criteria")
+    @PreAuthorize("isAuthenticated()")
+    public PageResult<JobEnrichedModel> criteriaQuery(@RequestBody JobCriteriaModel model){
+        return service.criteriaQuery(model);
     }
 }

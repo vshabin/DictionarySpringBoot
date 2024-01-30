@@ -46,4 +46,14 @@ public class ExportController {
         headers.set("Content-Disposition", "attachment; filename=" + exportReturnModel.getFileName() + exportReturnModel.getFileExtension());
         return ResponseEntity.status(HttpStatus.OK).headers(headers).body(exportReturnModel.getFileBody());
     }
+
+    @GetMapping(value = "/sendEmail/{jobId}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<?> sendEmail(@PathVariable UUID jobId) {
+        var exportReturnModel = service.sendFileToEmail(jobId);
+        var headers = new HttpHeaders();
+        return ResponseEntity.status(HttpStatus.OK)
+                .headers(headers)
+                .body(new GeneralResultModel(exportReturnModel.getErrorCode(), exportReturnModel.getErrorMessage()));
+    }
 }

@@ -2,21 +2,28 @@ package com.example.demo.infrastructure.repositories.job;
 
 import com.example.demo.config.ProcessorInfo;
 import com.example.demo.domain.common.GuidResultModel;
+import com.example.demo.domain.common.PageResult;
+import com.example.demo.domain.job.JobCriteriaModel;
 import com.example.demo.domain.job.JobModelReturn;
 import com.example.demo.domain.job.TaskStatus;
 import com.example.demo.domain.job.TaskType;
+import com.example.demo.domain.user.UserModelReturn;
+import com.example.demo.domainservices.UserService;
 import com.example.demo.infrastructure.repositories.DbServer;
 import com.example.demo.infrastructure.repositories.MapperInterfaces.JobMapper;
+import io.ebean.ExpressionList;
 import io.ebean.annotation.Transactional;
+import io.micrometer.common.util.StringUtils;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
-import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+
+import static com.example.demo.infrastructure.CommonUtils.escape;
 
 @Repository
 @Log4j2
@@ -29,6 +36,8 @@ public class JobRepository {
     private JobMapper mapStructMapper;
     @Autowired
     private ProcessorInfo processorInfo;
+    @Autowired
+    private UserService userService;
 
     public JobModelReturn findById(UUID id) {
         var entity = dbServer.getDB().find(JobEntity.class).where().eq(JobEntity.JOB_ID, id).findOne();
@@ -267,4 +276,45 @@ public class JobRepository {
         return mapStructMapper.toJobModelReturnList(result);
     }
 
+    public PageResult<JobModelReturn> criteriaQuery(JobCriteriaModel criteriaModel) {
+        var exp = dbServer.getDB()
+                .find(JobEntity.class)
+                .where();
+        applyCriteria(criteriaModel, exp);
+        var entityList = exp
+                .setFirstRow(criteriaModel.getSize() * (criteriaModel.getPageNumber() - 1))
+                .setMaxRows(criteriaModel.getSize()).findPagedList();
+        return new PageResult<>(mapStructMapper.toJobModelReturnList(entityList.getList()), entityList.getTotalCount());
+    }
+
+    private void applyCriteria(JobCriteriaModel criteriaModel, ExpressionList<JobEntity> expr) {
+        if (criteriaModel.getTaskTypeFilter() != null) {
+            expr.eq(JobEntity.TASK_TYPE, criteriaModel.getTaskTypeFilter());
+        }
+        if (criteriaModel.getCreatorUserIDFilter() != null) {
+            expr.eq(JobEntity.CREATOR_USER_ID, criteriaModel.getCreatorUserIDFilter());
+        }
+        if (StringUtils.isNotBlank(criteriaModel.getCreatorLoginFilter())) {
+            expr.in(JobEntity.CREATOR_USER_ID,
+                    userService.getByLikeLogin(criteriaModel.getCreatorLoginFilter())
+                            .stream()
+                            .map(UserModelReturn::getId)
+                            .toList());
+        }
+        if (criteriaModel.getTaskStatusFilter() != null) {
+            expr.eq(JobEntity.STATUS, criteriaModel.getTaskStatusFilter());
+        }
+        if (StringUtils.isNotBlank(criteriaModel.getProcessorFilter())) {
+            expr.like(JobEntity.PROCESSOR, escape(criteriaModel.getProcessorFilter(), '%'));
+        }
+        if (criteriaModel.getCreatedFromFilter() != null) {
+            expr.ge(JobEntity.CREATED_AT, criteriaModel.getCreatedFromFilter());
+        }
+        if (criteriaModel.getCreatedToFilter() != null) {
+            expr.le(JobEntity.CREATED_AT, criteriaModel.getCreatedToFilter());
+        }
+        if (StringUtils.isNotBlank(criteriaModel.getSortFilter())) {
+            expr.orderBy(criteriaModel.getSortFilter());
+        }
+    }
 }

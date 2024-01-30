@@ -15,4 +15,6 @@
     <include file="db/changelog/changes2024/20240124-jobs-table.xml"/>
     <include file="db/changelog/changes2024/20240125-jobs-table.xml"/>
     <include file="db/changelog/changes2024/20240126-jobs-table.xml"/>
+    <include file="db/changelog/changes2024/20240129-users-table.xml"/>
+    <include file="db/changelog/changes2024/20240129-2-users-table.xml"/>
 </databaseChangeLog>

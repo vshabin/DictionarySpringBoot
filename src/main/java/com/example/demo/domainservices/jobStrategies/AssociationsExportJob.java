@@ -5,6 +5,7 @@ import com.example.demo.domain.common.PageResult;
 import com.example.demo.domain.exceptions.CriticalErrorException;
 import com.example.demo.domain.export.AssociationsExportModel;
 import com.example.demo.domain.export.ExportCriteriaModel;
+import com.example.demo.domain.job.JobModelPost;
 import com.example.demo.domain.job.JobModelReturn;
 import com.example.demo.domain.job.ProgressMessageModel;
 import com.example.demo.domain.job.TaskType;

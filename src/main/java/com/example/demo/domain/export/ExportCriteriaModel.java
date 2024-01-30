@@ -15,6 +15,7 @@ public class ExportCriteriaModel extends PageModel {
     private ExportType exportType;
     @NotEmpty
     private String fileExtension;
+    private boolean sendEmail;
 
     private LocalDateTime fromFilter;
     private LocalDateTime toFilter;

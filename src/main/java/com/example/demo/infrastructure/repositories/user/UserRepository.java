@@ -14,6 +14,7 @@ import org.springframework.stereotype.Repository;
 
 import javax.inject.Inject;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @Repository
@@ -67,7 +68,7 @@ public class UserRepository {
                 .findSingleAttribute();
     }
 
-    public List<UserModelReturn> getUserListByIdList(List<UUID> ids){
+    public List<UserModelReturn> getUserListByIdList(Set<UUID> ids){
         return mapStructMapper.toUserModelReturnList(dbServer.getDB()
                 .find(UserEntity.class)
                 .where()
@@ -115,5 +116,10 @@ public class UserRepository {
         var page = exp.findPagedList();
 
         return new PageResult<>(mapStructMapper.toUserModelReturnList(page.getList()), page.getTotalCount());
+    }
+
+    public List<UserModelReturn> getByLikeLogin(String login) {
+        var entities = dbServer.getDB().find(UserEntity.class).where().like(UserEntity.LOGIN, escape(login, '%')).findList();
+        return mapStructMapper.toUserModelReturnList(entities);
     }
 }

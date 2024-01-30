@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 
 import javax.inject.Inject;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @Service
@@ -46,7 +47,7 @@ public class UserService {
         return repository.exists(login);
     }
 
-    public List<UserModelReturn> getUserListByIdList(List<UUID> ids){
+    public List<UserModelReturn> getUserListByIdSet(Set<UUID> ids){
         return repository.getUserListByIdList(ids);
     }
 
@@ -56,5 +57,9 @@ public class UserService {
 
     public PageResult<UserModelReturn> getPage(UserCriteriaModel userCriteriaModel) {
         return repository.getPage(userCriteriaModel);
+    }
+
+    public List<UserModelReturn> getByLikeLogin(String login) {
+        return repository.getByLikeLogin(login);
     }
 }

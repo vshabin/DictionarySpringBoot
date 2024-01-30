@@ -22,6 +22,8 @@ public class UserEntity {
     public static final String FULL_NAME = "full_name";
     public static final String CREATED_AT = "created_at";
     public static final String ARCHIVE_DATE = "archive_date";
+    public static final String EMAIL = "email";
+    public static final String PHONE_NUMBER = "phoneNumber";
 
     @Id
     @Column(name = ID)
@@ -42,6 +44,12 @@ public class UserEntity {
     @Column(name = FULL_NAME)
     @NotBlank
     private String fullName;
+
+    @Column(name = EMAIL)
+    private String email;
+
+    @Column(name = PHONE_NUMBER)
+    private String phoneNumber;
 
     @Column(name = CREATED_AT)
     @WhenCreated

@@ -7,6 +7,10 @@ import com.zaxxer.hikari.HikariDataSource;
 import io.ebean.DatabaseFactory;
 import io.ebean.config.CurrentUserProvider;
 import io.ebean.config.DatabaseConfig;
+import jakarta.mail.Authenticator;
+import jakarta.mail.Message;
+import jakarta.mail.PasswordAuthentication;
+import jakarta.mail.Session;
 import liquibase.Contexts;
 import liquibase.LabelExpression;
 import liquibase.Liquibase;
@@ -25,6 +29,7 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
+import java.util.Properties;
 import java.util.logging.Logger;
 
 @Configuration
@@ -34,6 +39,12 @@ public class AppConfig {
     private int poolSize;
     @Value("${threads.queueCapacity}")
     private int queueCapacity;
+
+    @Value("${mail.username}")
+    private String username;
+    @Value("${mail.password}")
+    private String password;
+
     @Bean
     @Qualifier("jobs")
     public ThreadPoolTaskExecutor taskExecutor() {
@@ -43,6 +54,22 @@ public class AppConfig {
         pool.setQueueCapacity(queueCapacity);
         pool.setWaitForTasksToCompleteOnShutdown(true);
         return pool;
+    }
+
+    @Bean
+    public Session session() {
+        Properties properties = new Properties();
+        properties.put("mail.smtp.host", "smtp.mail.ru");
+        properties.put("mail.smtp.port", "465");
+        properties.put("mail.smtp.ssl.enable", "true");
+        properties.put("mail.smtp.auth", "true");
+
+        return Session.getInstance(properties, new Authenticator() {
+            @Override
+            protected PasswordAuthentication getPasswordAuthentication() {
+                return new PasswordAuthentication(username, password);
+            }
+        });
     }
 
 }
