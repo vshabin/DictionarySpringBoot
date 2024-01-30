@@ -1,12 +1,12 @@
 package com.example.demo.domainservices.jobStrategies;
 
-import com.example.demo.domain.common.GeneralResultModel;
 import com.example.demo.domain.exceptions.CriticalErrorException;
 import com.example.demo.domain.exceptions.ErrorException;
-import com.example.demo.domain.export.ExportCriteriaModel;
-import com.example.demo.domain.job.*;
+import com.example.demo.domain.job.JobModelReturn;
+import com.example.demo.domain.job.ProgressMessageModel;
+import com.example.demo.domain.job.SendEmailParams;
+import com.example.demo.domain.job.TaskType;
 import com.example.demo.domainservices.JobService;
-import com.example.demo.infrastructure.CommonUtils;
 import com.example.demo.infrastructure.JsonUtils;
 import jakarta.mail.Message;
 import jakarta.mail.Multipart;
@@ -24,9 +24,10 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.io.File;
+
 @Log4j2
 @Component
-public class EmailSendJob extends BaseJob{
+public class EmailSendJob extends BaseJob {
     private static final String NO_SUCH_JOB_ERROR_CODE = "NO_SUCH_JOB_ERROR_CODE";
     private static final String NO_SUCH_JOB_ERROR_MESSAGE = "No such job was found";
     private static final String NOT_READY_ERROR_CODE = "NOT_READY_ERROR_CODE";
@@ -37,7 +38,7 @@ public class EmailSendJob extends BaseJob{
     private static final String FAILED_SEND_FILE_ERROR_MESSAGE = "Failed to send file";
 
     @Autowired
-    private Session session;
+    private Session mailSession;
     @Autowired
     @Lazy
     private JobService jobService;
@@ -61,14 +62,13 @@ public class EmailSendJob extends BaseJob{
         File file;
         try {
             file = new File(params.getAttachment() + params.getAttachmentExtension());
-            if(!file.exists()){
+            if (!file.exists()) {
                 var binaryFile = new File(params.getAttachment());
                 FileUtils.copyFile(binaryFile, file);
             }
-            Message message = new MimeMessage(session);
+            Message message = new MimeMessage(mailSession);
             message.setFrom(new InternetAddress(username));
-            message.setRecipients(
-                    Message.RecipientType.TO, InternetAddress.parse(params.getTo()));
+            message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(params.getTo()));
             message.setSubject(params.getSubject());
 
             MimeBodyPart mimeBodyPart = new MimeBodyPart();

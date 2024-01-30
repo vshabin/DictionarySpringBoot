@@ -8,6 +8,8 @@ import com.example.demo.domain.job.JobModelPost;
 import com.example.demo.domain.job.TaskStatus;
 import com.example.demo.infrastructure.CommonUtils;
 import com.example.demo.infrastructure.JsonUtils;
+import it.tdlight.jni.TdApi;
+import it.tdlight.jni.TdApi.SendMessage;
 import jakarta.mail.Message;
 import jakarta.mail.Multipart;
 import jakarta.mail.Session;
@@ -19,11 +21,13 @@ import jakarta.mail.internet.MimeMultipart;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 @Service
 @Log4j2
@@ -43,7 +47,11 @@ public class ExportService {
     @Autowired
     private UserService userService;
     @Autowired
-    private Session session;
+    private Session mailSession;
+    @Autowired
+    @Qualifier("telegramClient")
+    private TelegramClient telegramClient;
+
     @Value("${mail.username}")
     private String username;
 
@@ -100,7 +108,7 @@ public class ExportService {
                 var binaryFile = new File(jobId.toString());
                 FileUtils.copyFile(binaryFile, file);
             }
-            Message message = new MimeMessage(session);
+            Message message = new MimeMessage(mailSession);
             message.setFrom(new InternetAddress(username));
             message.setRecipients(
                     Message.RecipientType.TO, InternetAddress.parse(userEmail));
@@ -116,6 +124,44 @@ public class ExportService {
             message.setContent(multipart);
 
             Transport.send(message);
+        } catch (Exception e) {
+            log.error(e);
+            return new GeneralResultModel(FAILED_SEND_FILE_ERROR_CODE, FAILED_SEND_FILE_ERROR_MESSAGE);
+        }
+        return new GeneralResultModel();
+    }
+
+    public GeneralResultModel sendFileToTelegram(UUID jobId) {
+        var job = jobService.findById(jobId);
+        if (job == null) {
+            return new GeneralResultModel(NO_SUCH_JOB_ERROR_CODE, NO_SUCH_JOB_ERROR_MESSAGE);
+        }
+        if (job.getStatus() != TaskStatus.SUCCESS) {
+            return new GeneralResultModel(NOT_READY_ERROR_CODE, NOT_READY_ERROR_MESSAGE + job.getStatus());
+        }
+
+        var paramsOptional = JsonUtils.readJSON(job.getParams(), ExportCriteriaModel.class);
+        if (paramsOptional.isEmpty()) {
+            return new GeneralResultModel(FAILED_READ_PARAMS_ERROR_CODE, FAILED_READ_PARAMS_ERROR_MESSAGE);
+        }
+        var params = paramsOptional.get();
+        var userPhone = userService.getById(CommonUtils.getUserId()).getPhone();
+        File file;
+
+        try {
+            file = new File(jobId + params.getFileExtension());
+            if(!file.exists()){
+                var binaryFile = new File(jobId.toString());
+                FileUtils.copyFile(binaryFile, file);
+            }
+            TdApi.User me = telegramClient.getClient().getMeAsync().get(1, TimeUnit.MINUTES);
+
+            var req = new SendMessage();
+            req.chatId =me.id;
+            var txt = new TdApi.InputMessageText();
+            txt.text = new TdApi.FormattedText("TDLight test", new TdApi.TextEntity[0]);
+            req.inputMessageContent = txt;
+            var result = telegramClient.getClient().sendMessage(req, true).get(1, TimeUnit.MINUTES);
         } catch (Exception e) {
             log.error(e);
             return new GeneralResultModel(FAILED_SEND_FILE_ERROR_CODE, FAILED_SEND_FILE_ERROR_MESSAGE);

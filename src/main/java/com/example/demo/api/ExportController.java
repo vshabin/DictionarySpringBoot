@@ -56,4 +56,14 @@ public class ExportController {
                 .headers(headers)
                 .body(new GeneralResultModel(exportReturnModel.getErrorCode(), exportReturnModel.getErrorMessage()));
     }
+
+    @GetMapping(value = "/sendTelegram/{jobId}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<?> sendTelegram(@PathVariable UUID jobId) {
+        var exportReturnModel = service.sendFileToTelegram(jobId);
+        var headers = new HttpHeaders();
+        return ResponseEntity.status(HttpStatus.OK)
+                .headers(headers)
+                .body(new GeneralResultModel(exportReturnModel.getErrorCode(), exportReturnModel.getErrorMessage()));
+    }
 }
