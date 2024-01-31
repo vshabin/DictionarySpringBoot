@@ -22,6 +22,7 @@ import java.io.File;
 @Component
 public class TelegramSendJob extends BaseJob {
     private static final String FAILED_READ_PARAMS_ERROR_MESSAGE = "Failed to read parameters";
+    private static final String NO_USER_CHAT_ID_ERROR_MESSAGE = "No such user chat id";
     private static final String FAILED_SEND_FILE_ERROR_MESSAGE = "Failed to send file";
 
     @Autowired
@@ -38,6 +39,9 @@ public class TelegramSendJob extends BaseJob {
             throw new CriticalErrorException(FAILED_READ_PARAMS_ERROR_MESSAGE);
         }
         var params = paramsOptional.get();
+        if(params.getUserChatId().isEmpty()) {
+            throw new CriticalErrorException(NO_USER_CHAT_ID_ERROR_MESSAGE);
+        }
 
         progressMessageModel.setAllCount(1);
         job.setProgress(JsonUtils.toString(progressMessageModel));
@@ -54,7 +58,7 @@ public class TelegramSendJob extends BaseJob {
             }
             var inputFile = new InputFile();
             inputFile.setMedia(file, params.getAttachmentName() + params.getAttachmentExtension());
-            telegramBot.sendMessage(params.getPhoneNumber(), params.getText(), inputFile);
+            telegramBot.sendMessage(params.getUserChatId(), params.getText(), inputFile);
 
             progressMessageModel.setSuccessCount(1);
             job.setProgress(JsonUtils.toString(progressMessageModel));

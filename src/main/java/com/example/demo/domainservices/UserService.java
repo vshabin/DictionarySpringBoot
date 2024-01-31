@@ -62,4 +62,12 @@ public class UserService {
     public List<UserModelReturn> getByLikeLogin(String login) {
         return repository.getByLikeLogin(login);
     }
+
+    public UserModelReturn getByTelegramLogin(String telegramLogin) {
+        return repository.getByTelegramLogin(telegramLogin);
+    }
+
+    public void update(UserModelReturn userModel) {
+        repository.update(userModel);
+    }
 }

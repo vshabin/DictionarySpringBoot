@@ -151,7 +151,7 @@ public class ExportService {
             }
             InputFile inputFile = new InputFile();
             inputFile.setMedia(file);
-            telegramBot.sendMessage(user.getPhoneNumber(), "Export", inputFile);
+            telegramBot.sendMessage(user.getTelegramChatId(), "Export", inputFile);
         } catch (Exception e) {
             log.error(e);
             return new GeneralResultModel(FAILED_SEND_FILE_ERROR_CODE, FAILED_SEND_FILE_ERROR_MESSAGE);

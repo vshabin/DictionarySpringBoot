@@ -8,6 +8,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
@@ -28,6 +29,7 @@ public class ApplicationExceptionHandler {
     static final String NO_ACCESS_TOKEN_ERROR_MESSAGE = "Access token wasn't found";
     static final String UNKNOWN_ERROR = "UNKNOWN_ERROR";
     @Autowired
+    @Lazy
     private TelegramBot telegramBot;
 
     @ExceptionHandler(value = Exception.class)

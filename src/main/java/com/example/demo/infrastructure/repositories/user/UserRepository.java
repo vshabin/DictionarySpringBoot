@@ -119,7 +119,30 @@ public class UserRepository {
     }
 
     public List<UserModelReturn> getByLikeLogin(String login) {
-        var entities = dbServer.getDB().find(UserEntity.class).where().like(UserEntity.LOGIN, escape(login, '%')).findList();
+        var entities = dbServer.getDB()
+                .find(UserEntity.class)
+                .where()
+                .like(UserEntity.LOGIN, escape(login, '%'))
+                .findList();
         return mapStructMapper.toUserModelReturnList(entities);
+    }
+
+    public UserModelReturn getByTelegramLogin(String telegramLogin) {
+        var result = dbServer.getDB()
+                .find(UserEntity.class)
+                .where()
+                .eq(UserEntity.TELEGRAM_LOGIN, telegramLogin)
+                .findOne();
+        return mapStructMapper.toUserModelReturn(result);
+    }
+    @Transactional
+    public UserModelReturn update(UserModelReturn userModel) {
+        UserEntity entity = mapStructMapper.toUserEntity(userModel);
+        try {
+            dbServer.getDB().update(entity);
+        } catch (Exception e) {
+            return new UserModelReturn(DATABASE_TRANSACTION_ERROR_CODE, DATABASE_TRANSACTION_ERROR_MESSAGE + e.getMessage());
+        }
+        return userModel;
     }
 }

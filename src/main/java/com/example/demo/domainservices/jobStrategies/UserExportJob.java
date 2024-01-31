@@ -129,7 +129,7 @@ public class UserExportJob extends BaseJob {
             params.setAttachmentExtension(criteriaModel.getFileExtension());
             params.setAttachmentName(FILE_NAME_FOR_SEND);
 
-            params.setPhoneNumber(userService.getById(job.getCreatorUserId()).getPhoneNumber());
+            params.setUserChatId(userService.getById(job.getCreatorUserId()).getTelegramChatId());
             params.setText(SEND_TEXT + formatter.format(job.getCreatedAt()));
 
             sendJob.setParams(JsonUtils.toString(params));

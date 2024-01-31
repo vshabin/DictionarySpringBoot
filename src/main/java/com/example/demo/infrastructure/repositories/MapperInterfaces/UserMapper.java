@@ -13,6 +13,7 @@ import java.util.List;
 )
 public interface UserMapper {
     UserEntity toUserEntity(UserModelPost userModel);
+    UserEntity toUserEntity(UserModelReturn userModel);
 
     @Mapping(source = "userEntity.id", target = "id")
     @Mapping(source = "userEntity.login", target = "login")

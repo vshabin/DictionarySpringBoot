@@ -29,6 +29,6 @@ public class UserModelPost extends GeneralResultModel {
 
     @Email
     private String email;
-    @Pattern(regexp="(^$|[0-9]{10})")
-    private String phone;
+    private String telegramLogin;
+    private String telegramChatId;
 }

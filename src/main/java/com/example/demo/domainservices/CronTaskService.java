@@ -26,7 +26,7 @@ public class CronTaskService {
     @Autowired
     JobService jobService;
 
-    @Scheduled(fixedRate = 5 * 60 * 1000, initialDelay = 1000)
+    @Scheduled(fixedRate = 5 * 60 * 1000, initialDelay = 10000)
     private void checkJobs() {
         var tasks = repository.getTasks();
         for (CronTaskReturnModel task : tasks) {

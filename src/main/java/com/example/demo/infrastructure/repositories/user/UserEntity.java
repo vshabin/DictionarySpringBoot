@@ -23,7 +23,8 @@ public class UserEntity {
     public static final String CREATED_AT = "created_at";
     public static final String ARCHIVE_DATE = "archive_date";
     public static final String EMAIL = "email";
-    public static final String PHONE_NUMBER = "phoneNumber";
+    public static final String TELEGRAM_LOGIN = "telegramLogin";
+    public static final String TELEGRAM_CHAT_ID = "telegramChatId";
 
     @Id
     @Column(name = ID)
@@ -48,8 +49,11 @@ public class UserEntity {
     @Column(name = EMAIL)
     private String email;
 
-    @Column(name = PHONE_NUMBER)
-    private String phoneNumber;
+    @Column(name = TELEGRAM_LOGIN)
+    private String telegramLogin;
+
+    @Column(name = TELEGRAM_CHAT_ID)
+    private String telegramChatId;
 
     @Column(name = CREATED_AT)
     @WhenCreated
