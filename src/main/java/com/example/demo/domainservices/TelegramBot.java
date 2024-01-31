@@ -1,10 +1,15 @@
 package com.example.demo.domainservices;
 
+import com.example.demo.domain.user.UserModelReturn;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
+import org.telegram.telegrambots.meta.api.methods.send.SendContact;
+import org.telegram.telegrambots.meta.api.methods.send.SendDocument;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
+import org.telegram.telegrambots.meta.api.objects.InputFile;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
@@ -40,15 +45,28 @@ public class TelegramBot extends TelegramLongPollingBot {
         }
     }
 
-    public void sendMessage(long chatId, String message) {
-        SendMessage sendMessage = new SendMessage();
-        sendMessage.setChatId(chatId);
-        sendMessage.setText(message);
-        try {
-            execute(sendMessage);
-        } catch (TelegramApiException e) {
-            log.error(e.getMessage());
-        }
+    public void sendMessage(String phoneNumber, String message, InputFile attachment) throws TelegramApiException {
+        SendContact sendContact = new SendContact();
+        sendContact.setPhoneNumber(phoneNumber);
+        sendContact.setChatId(chatId);
+        sendContact.setFirstName("a");
+        sendContact.setLastName("a");
+        sendContact.setDisableNotification(true);
+        Long userId = null;
+
+        var messageObject = execute(sendContact);
+        userId = messageObject.getContact().getUserId();
+        var deleteMessage = new DeleteMessage();
+        deleteMessage.setMessageId(messageObject.getMessageId());
+        deleteMessage.setChatId(chatId);
+        execute(deleteMessage);
+
+        SendDocument sendDocument = new SendDocument();
+        sendDocument.setChatId(userId);
+        sendDocument.setCaption(message);
+        sendDocument.setDocument(attachment);
+
+        execute(sendDocument);
     }
 
     @Override

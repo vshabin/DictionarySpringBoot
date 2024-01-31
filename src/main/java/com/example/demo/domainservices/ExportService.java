@@ -24,6 +24,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.telegram.telegrambots.meta.api.objects.InputFile;
 
 import java.io.File;
 import java.util.UUID;
@@ -49,9 +50,7 @@ public class ExportService {
     @Autowired
     private Session mailSession;
     @Autowired
-    @Qualifier("telegramClient")
-    private TelegramClient telegramClient;
-
+    private TelegramBot telegramBot;
     @Value("${mail.username}")
     private String username;
 
@@ -145,7 +144,7 @@ public class ExportService {
             return new GeneralResultModel(FAILED_READ_PARAMS_ERROR_CODE, FAILED_READ_PARAMS_ERROR_MESSAGE);
         }
         var params = paramsOptional.get();
-        var userPhone = userService.getById(CommonUtils.getUserId()).getPhone();
+        var user= userService.getById(CommonUtils.getUserId());
         File file;
 
         try {
@@ -154,14 +153,9 @@ public class ExportService {
                 var binaryFile = new File(jobId.toString());
                 FileUtils.copyFile(binaryFile, file);
             }
-            TdApi.User me = telegramClient.getClient().getMeAsync().get(1, TimeUnit.MINUTES);
-
-            var req = new SendMessage();
-            req.chatId =me.id;
-            var txt = new TdApi.InputMessageText();
-            txt.text = new TdApi.FormattedText("TDLight test", new TdApi.TextEntity[0]);
-            req.inputMessageContent = txt;
-            var result = telegramClient.getClient().sendMessage(req, true).get(1, TimeUnit.MINUTES);
+            InputFile inputFile = new InputFile();
+            inputFile.setMedia(file);
+            telegramBot.sendMessage(user.getPhoneNumber(), "Export", inputFile);
         } catch (Exception e) {
             log.error(e);
             return new GeneralResultModel(FAILED_SEND_FILE_ERROR_CODE, FAILED_SEND_FILE_ERROR_MESSAGE);

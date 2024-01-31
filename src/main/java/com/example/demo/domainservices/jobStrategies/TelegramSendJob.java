@@ -6,7 +6,9 @@ import com.example.demo.domain.job.JobModelReturn;
 import com.example.demo.domain.job.ProgressMessageModel;
 import com.example.demo.domain.job.params.SendEmailParams;
 import com.example.demo.domain.job.TaskType;
+import com.example.demo.domain.job.params.SendTelegramParams;
 import com.example.demo.domainservices.JobService;
+import com.example.demo.domainservices.TelegramBot;
 import com.example.demo.infrastructure.JsonUtils;
 import jakarta.mail.Message;
 import jakarta.mail.Multipart;
@@ -22,27 +24,26 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
+import org.telegram.telegrambots.meta.api.objects.InputFile;
 
 import java.io.File;
 
 @Log4j2
 @Component
-public class EmailSendJob extends BaseJob {
+public class TelegramSendJob extends BaseJob{
     private static final String FAILED_READ_PARAMS_ERROR_MESSAGE = "Failed to read parameters";
     private static final String FAILED_SEND_FILE_ERROR_MESSAGE = "Failed to send file";
 
     @Autowired
-    private Session mailSession;
-    @Autowired
     @Lazy
     private JobService jobService;
-    @Value("${mail.username}")
-    private String username;
+    @Autowired
+    private TelegramBot telegramBot;
 
     @Override
     protected void internalRun(JobModelReturn job, ProgressMessageModel progressMessageModel) {
-        log.info("Start sending email");
-        var paramsOptional = JsonUtils.readJSON(job.getParams(), SendEmailParams.class);
+        log.info("Start sending telegram");
+        var paramsOptional = JsonUtils.readJSON(job.getParams(), SendTelegramParams.class);
         if (paramsOptional.isEmpty()) {
             throw new CriticalErrorException(FAILED_READ_PARAMS_ERROR_MESSAGE);
         }
@@ -54,31 +55,16 @@ public class EmailSendJob extends BaseJob {
         jobService.update(job);
 
         File file;
+
         try {
             file = new File(params.getAttachment() + params.getAttachmentExtension());
-            if (!file.exists()) {
+            if(!file.exists()){
                 var binaryFile = new File(params.getAttachment());
                 FileUtils.copyFile(binaryFile, file);
             }
-            var message = new MimeMessage(mailSession);
-            message.setFrom(new InternetAddress(username));
-            message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(params.getTo()));
-            message.setSubject(params.getSubject());
-
-            var mimeBodyPart = new MimeBodyPart();
-            mimeBodyPart.setContent(params.getText(), "text/plain; charset=utf-8");
-
-            var attachmentBodyPart = new MimeBodyPart();
-            attachmentBodyPart.attachFile(file);
-            attachmentBodyPart.setFileName(params.getAttachmentName() + params.getAttachmentExtension());
-
-            var multipart = new MimeMultipart();
-            multipart.addBodyPart(mimeBodyPart);
-            multipart.addBodyPart(attachmentBodyPart);
-
-            message.setContent(multipart);
-
-            Transport.send(message);
+            InputFile inputFile = new InputFile();
+            inputFile.setMedia(file, params.getAttachmentName() + params.getAttachmentExtension());
+            telegramBot.sendMessage(params.getPhoneNumber(), params.getText(), inputFile);
 
             progressMessageModel.setSuccessCount(1);
             job.setProgress(JsonUtils.toString(progressMessageModel));
@@ -93,7 +79,7 @@ public class EmailSendJob extends BaseJob {
             jobService.update(job);
             throw new ErrorException(FAILED_SEND_FILE_ERROR_MESSAGE);
         }
-        log.info("Finish sending email");
+        log.info("Finish sending telegram");
     }
 
     @Override
@@ -103,6 +89,6 @@ public class EmailSendJob extends BaseJob {
 
     @Override
     public TaskType getType() {
-        return TaskType.SEND_EMAIL;
+        return TaskType.SEND_TELEGRAM;
     }
 }

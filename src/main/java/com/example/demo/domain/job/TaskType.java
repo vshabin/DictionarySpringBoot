@@ -8,6 +8,7 @@ public enum TaskType {
     USER_EXPORT(true),
     TEST_TASK(true),
     SEND_EMAIL(true),
+    SEND_TELEGRAM(true),
 
 
     ;

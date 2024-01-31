@@ -5,7 +5,12 @@ import com.example.demo.domain.common.PageResult;
 import com.example.demo.domain.exceptions.CriticalErrorException;
 import com.example.demo.domain.export.AssociationsExportModel;
 import com.example.demo.domain.export.ExportCriteriaModel;
-import com.example.demo.domain.job.*;
+import com.example.demo.domain.job.JobModelPost;
+import com.example.demo.domain.job.JobModelReturn;
+import com.example.demo.domain.job.ProgressMessageModel;
+import com.example.demo.domain.job.TaskType;
+import com.example.demo.domain.job.params.SendEmailParams;
+import com.example.demo.domain.job.params.SendTelegramParams;
 import com.example.demo.domain.job.progress.ExportProgress;
 import com.example.demo.domain.user.UserCriteriaModel;
 import com.example.demo.domain.user.UserModelReturn;
@@ -26,6 +31,7 @@ import org.springframework.stereotype.Component;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -40,9 +46,10 @@ public class AssociationsExportJob extends BaseJob {
     private final String TOO_MANY_USERS_FILTERED_ERROR_CODE = "TOO_MANY_USERS_FILTERED_ERROR_CODE";
     private final String TOO_MANY_USERS_FILTERED_ERROR_MESSAGE = "Слишком много людей было найдено в фильтре";
     private static final String EMAIL_SUBJECT = "Экспорт ассоциаций";
-    private static final String EMAIL_TEXT = "Ваш экспорт готов";
+    private static final String SEND_TEXT = "Готов ваш экспорт ассоциаций от ";
     private static final String EXCEL_EXTENSION = ".xlsx";
-
+    private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy HH-mm");
+    private static final String FILE_NAME_FOR_SEND = "Экспорт_ассоциаций";
 
     @Autowired
     private UserService userService;
@@ -71,8 +78,7 @@ public class AssociationsExportJob extends BaseJob {
             var file = new File(job.getJobId().toString());
             file.createNewFile();
             fileStream = new FileInputStream(job.getJobId().toString());
-        }
-        catch (Exception e){
+        } catch (Exception e) {
             throw new CriticalErrorException(e.getMessage());
         }
         AssociationsExportWriterInterface writer;
@@ -92,9 +98,6 @@ public class AssociationsExportJob extends BaseJob {
                 progress.setLastPage(progress.getLastPage() + 1);
                 criteriaModel.setPageNumber(progress.getLastPage());
                 pageResult = getAssociationsExportModels(criteriaModel);
-//            if (progress.getLastPage() == 50) {
-//                throw new ErrorException("ПРОВЕРКА");
-//            }
                 if (pageResult == null) {
                     break;
                 }
@@ -126,17 +129,34 @@ public class AssociationsExportJob extends BaseJob {
 
             }
         }
-        if(criteriaModel.isSendEmail()){
+        if (criteriaModel.isSendEmail()) {
             var sendJob = new JobModelPost();
             sendJob.setTaskType(TaskType.SEND_EMAIL);
 
             var params = new SendEmailParams();
             params.setAttachment(job.getJobId().toString());
             params.setAttachmentExtension(criteriaModel.getFileExtension());
+            params.setAttachmentName(FILE_NAME_FOR_SEND);
 
             params.setTo(userService.getById(job.getCreatorUserId()).getEmail());
             params.setSubject(EMAIL_SUBJECT);
-            params.setText(EMAIL_TEXT);
+            params.setText(SEND_TEXT + formatter.format(job.getCreatedAt()));
+
+            sendJob.setParams(JsonUtils.toString(params));
+
+            jobService.addNew(sendJob);
+        }
+        if (criteriaModel.isSendTelegram()) {
+            var sendJob = new JobModelPost();
+            sendJob.setTaskType(TaskType.SEND_TELEGRAM);
+
+            var params = new SendTelegramParams();
+            params.setAttachment(job.getJobId().toString());
+            params.setAttachmentExtension(criteriaModel.getFileExtension());
+            params.setAttachmentName(FILE_NAME_FOR_SEND);
+
+            params.setPhoneNumber(userService.getById(job.getCreatorUserId()).getPhoneNumber());
+            params.setText(SEND_TEXT + formatter.format(job.getCreatedAt()));
 
             sendJob.setParams(JsonUtils.toString(params));
 

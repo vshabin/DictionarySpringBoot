@@ -4,6 +4,8 @@ import com.example.demo.domain.common.PageResult;
 import com.example.demo.domain.exceptions.CriticalErrorException;
 import com.example.demo.domain.export.ExportCriteriaModel;
 import com.example.demo.domain.job.*;
+import com.example.demo.domain.job.params.SendEmailParams;
+import com.example.demo.domain.job.params.SendTelegramParams;
 import com.example.demo.domain.job.progress.ExportProgress;
 import com.example.demo.domain.user.UserCriteriaModel;
 import com.example.demo.domain.user.UserModelReturn;
@@ -11,9 +13,7 @@ import com.example.demo.domainservices.JobService;
 import com.example.demo.domainservices.UserService;
 import com.example.demo.domainservices.jobStrategies.ExportWriters.UserExportExcelWriter;
 import com.example.demo.domainservices.jobStrategies.ExportWriters.UserExportWriterInterface;
-import com.example.demo.domainservices.jobStrategies.ExportWriters.WriterInterface;
 import com.example.demo.infrastructure.JsonUtils;
-import io.micrometer.common.util.StringUtils;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
@@ -22,6 +22,7 @@ import org.springframework.stereotype.Component;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.time.format.DateTimeFormatter;
 
 
 @Log4j2
@@ -31,7 +32,9 @@ public class UserExportJob extends BaseJob {
     private static final String FAILED_READ_PARAMS_EXCEPTION_MESSAGE = "Failed to read parameters";
     private static final String EXCEL_EXTENSION = ".xlsx";
     private static final String EMAIL_SUBJECT = "Экспорт пользователей";
-    private static final String EMAIL_TEXT = "Ваш экспорт готов";
+    private static final String SEND_TEXT= "Готов ваш экспорт пользователей от ";
+    private static final String FILE_NAME_FOR_SEND = "Экспорт_пользователей";
+    private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy HH-mm");
 
     @Autowired
     private UserService userService;
@@ -105,10 +108,27 @@ public class UserExportJob extends BaseJob {
             var params = new SendEmailParams();
             params.setAttachment(job.getJobId().toString());
             params.setAttachmentExtension(criteriaModel.getFileExtension());
+            params.setAttachmentName(FILE_NAME_FOR_SEND);
 
             params.setTo(userService.getById(job.getCreatorUserId()).getEmail());
             params.setSubject(EMAIL_SUBJECT);
-            params.setText(EMAIL_TEXT);
+            params.setText(SEND_TEXT + formatter.format(job.getCreatedAt()));
+
+            sendJob.setParams(JsonUtils.toString(params));
+
+            jobService.addNew(sendJob);
+        }
+        if(criteriaModel.isSendTelegram()){
+            var sendJob = new JobModelPost();
+            sendJob.setTaskType(TaskType.SEND_TELEGRAM);
+
+            var params = new SendTelegramParams();
+            params.setAttachment(job.getJobId().toString());
+            params.setAttachmentExtension(criteriaModel.getFileExtension());
+            params.setAttachmentName(FILE_NAME_FOR_SEND);
+
+            params.setPhoneNumber(userService.getById(job.getCreatorUserId()).getPhoneNumber());
+            params.setText(SEND_TEXT + formatter.format(job.getCreatedAt()));
 
             sendJob.setParams(JsonUtils.toString(params));
 

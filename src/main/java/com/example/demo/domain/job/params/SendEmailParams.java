@@ -1,4 +1,4 @@
-package com.example.demo.domain.job;
+package com.example.demo.domain.job.params;
 
 import lombok.Data;
 
@@ -8,5 +8,6 @@ public class SendEmailParams {
     private String subject;
     private String text;
     private String attachment;
+    private String attachmentName;
     private String attachmentExtension;
 }

@@ -25,7 +25,7 @@ public class UserModelReturn extends GeneralResultModel {
     @RoleTypeValidate(anyOf = {Role.ADMIN, Role.USER})
     private Role role;
     private String email;
-    private String phone;
+    private String phoneNumber;
     @JsonFormat(pattern = "yyyy.MM.dd HH:mm:ss.SSS")
     @Schema(name = "Date of creation", example = "2023-12-03 18:59:00.655995 +00:00", requiredMode= Schema.RequiredMode.NOT_REQUIRED, hidden = true)
     private LocalDateTime createdAt;
