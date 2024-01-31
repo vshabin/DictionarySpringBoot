@@ -32,7 +32,7 @@ public abstract class BaseJob implements JobInterface {
 
     @Override
     public final void run(JobModelReturn jobModel) {
-        ProgressMessageModel progressMessageModel =JsonUtils.readJSON(jobModel.getProgressMessage(), ProgressMessageModel.class)
+        ProgressMessageModel progressMessageModel = JsonUtils.readJSON(jobModel.getProgressMessage(), ProgressMessageModel.class)
                 .orElse(new ProgressMessageModel());
         try {
             internalRun(jobModel, progressMessageModel);
@@ -58,5 +58,6 @@ public abstract class BaseJob implements JobInterface {
         jobModel.setProgressMessage(JsonUtils.toString(progressMessageModel));
         jobService.update(jobModel);
     }
+
     protected abstract void internalRun(JobModelReturn job, ProgressMessageModel progressMessageModel);
 }

@@ -32,7 +32,7 @@ public class ApplicationExceptionHandler {
 
     @ExceptionHandler(value = Exception.class)
     public void processUncaughtApplicationException(HttpServletRequest req, HttpServletResponse response, Exception e) throws IOException {
-        log.error(e.getMessage(),e);
+        log.error(e.getMessage(), e);
         telegramBot.sendMessage(e.getMessage());
 
         var errorMessage = e.getMessage();
@@ -65,7 +65,7 @@ public class ApplicationExceptionHandler {
             errorCode = ACCESS_ERROR;
             response.setStatus(403);
         }
-        if(e instanceof AuthenticationCredentialsNotFoundException) {
+        if (e instanceof AuthenticationCredentialsNotFoundException) {
             errorCode = NO_ACCESS_TOKEN_ERROR_CODE;
             errorMessage = NO_ACCESS_TOKEN_ERROR_MESSAGE;
             response.setStatus(403);

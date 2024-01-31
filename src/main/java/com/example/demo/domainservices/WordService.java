@@ -4,12 +4,10 @@ import com.example.demo.domain.common.GeneralResultModel;
 import com.example.demo.domain.common.GuidResultModel;
 import com.example.demo.domain.common.PageResult;
 import com.example.demo.domain.language.LanguageModelReturn;
-import com.example.demo.domain.user.UserModelReturn;
 import com.example.demo.domain.word.WordCriteriaModel;
 import com.example.demo.domain.word.WordModelPost;
 import com.example.demo.domain.word.WordModelReturn;
 import com.example.demo.domain.word.WordModelReturnEnriched;
-import com.example.demo.infrastructure.repositories.word.WordEntity;
 import com.example.demo.infrastructure.repositories.word.WordRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -30,8 +28,8 @@ public class WordService {
     private static final String WORD_ALREADY_EXIST_ERROR_MESSAGE = "Такое слово уже существует в словаре: ";
     private static final String WORD_ID_NOT_EXIST_ERROR_CODE = "WORD_ID_NOT_EXIST_ERROR";
     private static final String WORD_ID_NOT_EXIST_ERROR_MESSAGE = "Слово с таким id не существует: ";
-    private static final String INCORRECT_WORD_ERROR_CODE= "INCORRECT_WORD_ERROR_CODE";
-    private static final String INCORRECT_WORD_ERROR_MESSAGE= "Ваше слово не удовлетворяет требование языка";
+    private static final String INCORRECT_WORD_ERROR_CODE = "INCORRECT_WORD_ERROR_CODE";
+    private static final String INCORRECT_WORD_ERROR_MESSAGE = "Ваше слово не удовлетворяет требование языка";
 
 
     @Inject
@@ -66,8 +64,8 @@ public class WordService {
         if (word != null && word.getLanguageId().equals(model.getLanguageId())) {
             return new GuidResultModel(WORD_ALREADY_EXIST_ERROR_CODE, WORD_ALREADY_EXIST_ERROR_MESSAGE + (word.getId()));
         }
-        if(!model.getWord().matches(language.getRegEx())){
-            return new GuidResultModel(INCORRECT_WORD_ERROR_CODE,INCORRECT_WORD_ERROR_MESSAGE);
+        if (!model.getWord().matches(language.getRegEx())) {
+            return new GuidResultModel(INCORRECT_WORD_ERROR_CODE, INCORRECT_WORD_ERROR_MESSAGE);
         }
         return repository.save(model);
     }
@@ -100,8 +98,8 @@ public class WordService {
                 resultModels.add(new WordModelReturn(WORD_ALREADY_EXIST_ERROR_CODE, WORD_ALREADY_EXIST_ERROR_MESSAGE + StringUtils.capitalize(model.getWord())));
             } else if (!existLanguageMap.containsKey(model.getLanguageId())) {
                 resultModels.add(new WordModelReturn(UNEXPECTED_LANGUAGE_ID_ERROR_CODE, UNEXPECTED_LANGUAGE_ID_ERROR_MESSAGE + model.getLanguageId()));
-            } else if(!model.getWord().matches(existLanguageMap.get(model.getLanguageId()).getRegEx())){
-                resultModels.add( new WordModelReturn(INCORRECT_WORD_ERROR_CODE,INCORRECT_WORD_ERROR_MESSAGE));
+            } else if (!model.getWord().matches(existLanguageMap.get(model.getLanguageId()).getRegEx())) {
+                resultModels.add(new WordModelReturn(INCORRECT_WORD_ERROR_CODE, INCORRECT_WORD_ERROR_MESSAGE));
             } else {
                 modelsToSave.add(model);
             }
@@ -145,8 +143,8 @@ public class WordService {
         return repository.exists(word);
     }
 
-    public List<WordModelReturnEnriched> getListEnrichedByIds(Collection<UUID> ids){
-        var words= repository.getListEnrichedByIdList(ids);
+    public List<WordModelReturnEnriched> getListEnrichedByIds(Collection<UUID> ids) {
+        var words = repository.getListEnrichedByIdList(ids);
         var languageIds = words.stream()
                 .map(WordModelReturn::getLanguageId)
                 .distinct()
@@ -155,7 +153,7 @@ public class WordService {
                 .stream()
                 .collect(Collectors.toMap(LanguageModelReturn::getId, Function.identity()));
         var enrichedWordsList = new ArrayList<WordModelReturnEnriched>();
-        words.forEach(wordEntity->{
+        words.forEach(wordEntity -> {
             var wordModel = new WordModelReturnEnriched();
             wordModel.setId(wordEntity.getId());
             wordModel.setWord(wordEntity.getWord());

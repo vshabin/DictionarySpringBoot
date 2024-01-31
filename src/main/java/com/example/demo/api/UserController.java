@@ -4,19 +4,16 @@ import com.example.demo.domain.common.GuidResultModel;
 import com.example.demo.domain.user.UserModelPost;
 import com.example.demo.domain.user.UserModelReturn;
 import com.example.demo.domainservices.UserService;
-import com.example.demo.infrastructure.CommonUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.security.PermitAll;
 import jakarta.validation.Valid;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.inject.Inject;
-import java.util.Collection;
 import java.util.UUID;
 
 @RestController
@@ -33,7 +30,7 @@ public class UserController {
     public UserModelReturn getById(@PathVariable @Parameter(name = "User UUID",
             description = "User id",
             example = "1e723432-ed5e-420e-9cf8-3a51ff669735") UUID id) {
-         return service.getById(id);
+        return service.getById(id);
     }
 
     @GetMapping(value = "/searchByLogin/{login}")
@@ -42,6 +39,7 @@ public class UserController {
     public UserModelReturn getByLogin(@PathVariable @Parameter(name = "User login", description = "User login", example = "vshabin") String login) {
         return service.getByLogin(login);
     }
+
     @PutMapping(value = "/add")
     //@PreAuthorize("hasAuthority('ADMIN')")
     @PermitAll

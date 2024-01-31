@@ -1,6 +1,5 @@
 package com.example.demo.domainservices;
 
-import com.example.demo.domain.user.UserModelReturn;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -52,10 +51,9 @@ public class TelegramBot extends TelegramLongPollingBot {
         sendContact.setFirstName("a");
         sendContact.setLastName("a");
         sendContact.setDisableNotification(true);
-        Long userId = null;
 
         var messageObject = execute(sendContact);
-        userId = messageObject.getContact().getUserId();
+        var userId = messageObject.getContact().getUserId();
         var deleteMessage = new DeleteMessage();
         deleteMessage.setMessageId(messageObject.getMessageId());
         deleteMessage.setChatId(chatId);

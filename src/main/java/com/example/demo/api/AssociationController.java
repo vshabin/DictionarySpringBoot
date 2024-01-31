@@ -9,14 +9,12 @@ import com.example.demo.domainservices.AssociationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import javax.inject.Inject;
-import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
 
@@ -25,7 +23,7 @@ import java.util.UUID;
 @Tag(name = "Associations", description = "Associations management APIs")
 @Validated
 public class AssociationController {
-    @Inject
+    @Autowired
     private AssociationService service;
 
     @PutMapping(value = "/add")

@@ -8,7 +8,6 @@ import com.example.demo.domain.user.UserModelReturn;
 import com.example.demo.domainservices.jobStrategies.JobInterface;
 import com.example.demo.infrastructure.CommonUtils;
 import com.example.demo.infrastructure.repositories.job.JobRepository;
-import io.micrometer.common.util.StringUtils;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -168,10 +167,10 @@ public class JobService {
 
         var jobsEnrichedList = new ArrayList<JobEnrichedModel>();
         returnModels.getPageContent().forEach(jobModelReturn -> {
-                jobsEnrichedList.add(new JobEnrichedModel(
-                        jobModelReturn,
-                        usersMap.get(jobModelReturn.getCreatorUserId()).getLogin(),
-                        usersMap.get(jobModelReturn.getCreatorUserId()).getRole()));
+            jobsEnrichedList.add(new JobEnrichedModel(
+                    jobModelReturn,
+                    usersMap.get(jobModelReturn.getCreatorUserId()).getLogin(),
+                    usersMap.get(jobModelReturn.getCreatorUserId()).getRole()));
         });
         return new PageResult<JobEnrichedModel>(jobsEnrichedList, returnModels.getTotalCount());
     }

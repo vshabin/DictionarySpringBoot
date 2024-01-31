@@ -46,10 +46,10 @@ public class JwtAuthFilter extends GenericFilterBean {
             return;
         }
         SecurityContextHolder.getContext().setAuthentication(parsingResult.getAuthentication());
-        chain.doFilter(request,response);
+        chain.doFilter(request, response);
     }
 
-    private ParsingResult getAuthentication(HttpServletRequest request){
+    private ParsingResult getAuthentication(HttpServletRequest request) {
         try {
             String authHeader = ((HttpServletRequest) request).getHeader(AUTHORIZATION);
             if (authHeader == null) {

@@ -8,8 +8,6 @@ import com.example.demo.domain.job.JobModelPost;
 import com.example.demo.domain.job.TaskStatus;
 import com.example.demo.infrastructure.CommonUtils;
 import com.example.demo.infrastructure.JsonUtils;
-import it.tdlight.jni.TdApi;
-import it.tdlight.jni.TdApi.SendMessage;
 import jakarta.mail.Message;
 import jakarta.mail.Multipart;
 import jakarta.mail.Session;
@@ -21,14 +19,12 @@ import jakarta.mail.internet.MimeMultipart;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.objects.InputFile;
 
 import java.io.File;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 
 @Service
 @Log4j2
@@ -103,7 +99,7 @@ public class ExportService {
 
         try {
             file = new File(jobId + params.getFileExtension());
-            if(!file.exists()){
+            if (!file.exists()) {
                 var binaryFile = new File(jobId.toString());
                 FileUtils.copyFile(binaryFile, file);
             }
@@ -144,12 +140,12 @@ public class ExportService {
             return new GeneralResultModel(FAILED_READ_PARAMS_ERROR_CODE, FAILED_READ_PARAMS_ERROR_MESSAGE);
         }
         var params = paramsOptional.get();
-        var user= userService.getById(CommonUtils.getUserId());
+        var user = userService.getById(CommonUtils.getUserId());
         File file;
 
         try {
             file = new File(jobId + params.getFileExtension());
-            if(!file.exists()){
+            if (!file.exists()) {
                 var binaryFile = new File(jobId.toString());
                 FileUtils.copyFile(binaryFile, file);
             }

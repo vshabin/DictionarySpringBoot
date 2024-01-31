@@ -9,7 +9,6 @@ import org.apache.poi.xssf.streaming.SXSSFSheet;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -34,10 +33,9 @@ public class UserExportExcelWriter implements UserExportWriterInterface {
     );
 
     public UserExportExcelWriter(FileInputStream file) {
-        try{
+        try {
             workbook = new XSSFWorkbook(file);
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             workbook = new SXSSFWorkbook();
         }
         sheets = new HashMap<String, Sheet>();
@@ -53,16 +51,15 @@ public class UserExportExcelWriter implements UserExportWriterInterface {
             sheet = sheets.get(dictName);
             if (sheet == null) {
                 sheet = workbook.createSheet(dictName);
-                if(sheet instanceof SXSSFSheet){
-                    ((SXSSFSheet)sheet).trackAllColumnsForAutoSizing();
+                if (sheet instanceof SXSSFSheet) {
+                    ((SXSSFSheet) sheet).trackAllColumnsForAutoSizing();
                     writeHeader(sheet, boldStyle, HEADERS);
                     for (int i = 0; i < HEADERS.size(); i++) {
                         sheet.autoSizeColumn(i);
                         sheet.setColumnWidth(i, sheet.getColumnWidth(i) + 1280);
                     }
-                    ((SXSSFSheet)sheet).untrackAllColumnsForAutoSizing();
-                }
-                else {
+                    ((SXSSFSheet) sheet).untrackAllColumnsForAutoSizing();
+                } else {
                     writeHeader(sheet, boldStyle, HEADERS);
                 }
                 sheets.put(dictName, sheet);

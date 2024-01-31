@@ -8,7 +8,6 @@ import com.example.demo.domain.user.UserModelReturn;
 import com.example.demo.infrastructure.repositories.auth.SessionRepository;
 import com.example.demo.security.SecurityConst;
 import com.example.demo.security.SecurityConst.Role;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import javax.inject.Inject;

@@ -8,9 +8,9 @@ import com.example.demo.domain.language.LanguageModelAdd;
 import com.example.demo.domain.language.LanguageModelReturn;
 import com.example.demo.infrastructure.repositories.language.LanguageRepository;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -25,7 +25,7 @@ public class LanguageService {
     private static final String LANGUAGE_ID_NOT_EXIST_ERROR_CODE = "LANGUAGE_ID_NOT_EXIST";
     private static final String LANGUAGE_ID_NOT_EXIST_ERROR_MESSAGE = "Языка с таким id не существует: ";
 
-    @Inject
+    @Autowired
     private LanguageRepository repository;
 
     public LanguageModelReturn getByName(String name) {

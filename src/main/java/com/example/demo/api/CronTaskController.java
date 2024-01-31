@@ -3,8 +3,6 @@ package com.example.demo.api;
 import com.example.demo.domain.common.GuidResultModel;
 import com.example.demo.domain.crontasks.CronTaskPostModel;
 import com.example.demo.domain.crontasks.CronTaskReturnModel;
-import com.example.demo.domain.job.JobModelPost;
-import com.example.demo.domain.job.JobModelReturn;
 import com.example.demo.domainservices.CronTaskService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -25,7 +23,7 @@ public class CronTaskController {
 
     @PutMapping("/add")
     @PreAuthorize("hasAuthority('ADMIN')")
-    public GuidResultModel save(@Valid @RequestBody CronTaskPostModel model){
+    public GuidResultModel save(@Valid @RequestBody CronTaskPostModel model) {
         return service.addNew(model);
     }
 

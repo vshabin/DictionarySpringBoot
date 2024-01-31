@@ -37,10 +37,9 @@ public class AssociationsExportExcelWriter implements AssociationsExportWriterIn
     );
 
     public AssociationsExportExcelWriter(FileInputStream file) {
-        try{
+        try {
             workbook = new XSSFWorkbook(file);
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             workbook = new SXSSFWorkbook();
         }
         sheets = new HashMap<String, Sheet>();
@@ -58,16 +57,15 @@ public class AssociationsExportExcelWriter implements AssociationsExportWriterIn
                 sheet = workbook.createSheet(dictName);
 
 
-                if(sheet instanceof SXSSFSheet){
-                    ((SXSSFSheet)sheet).trackAllColumnsForAutoSizing();
+                if (sheet instanceof SXSSFSheet) {
+                    ((SXSSFSheet) sheet).trackAllColumnsForAutoSizing();
                     writeHeader(sheet, boldStyle, HEADERS);
                     for (int i = 0; i < HEADERS.size(); i++) {
                         sheet.autoSizeColumn(i);
                         sheet.setColumnWidth(i, sheet.getColumnWidth(i) + 1280);
                     }
-                    ((SXSSFSheet)sheet).untrackAllColumnsForAutoSizing();
-                }
-                else {
+                    ((SXSSFSheet) sheet).untrackAllColumnsForAutoSizing();
+                } else {
                     writeHeader(sheet, boldStyle, HEADERS);
                 }
 
@@ -81,20 +79,20 @@ public class AssociationsExportExcelWriter implements AssociationsExportWriterIn
         int rowCount = sheet.getLastRowNum() + 1;
 
         Row row = sheet.createRow(rowCount);
-        try{
+        try {
             var cellNum = 0;
             createCell(row, cellNum++, model.getWord() != null ? model.getWord().getWord() : null, style);
             createCell(row, cellNum++, model.getTranslation() != null ? model.getTranslation().getWord() : null, style);
             createCell(row, cellNum++, model.getCreatedAt() != null ? model.getCreatedAt().format(formatter) : null, style);
             //createCell(row, cellNum++, model.getUser() != null ? model.getUser().getFullName() : null, style);
-            createCell(row, cellNum++, model.getUser().getFullName() , style);
+            createCell(row, cellNum++, model.getUser().getFullName(), style);
             createCell(row, cellNum++, model.getUser().getLogin(), style);
             createCell(row, cellNum++, model.getUser() != null ? model.getUser().getRole().name() : null, style);
             CellRangeAddress region = new CellRangeAddress(sheet.getLastRowNum() - 1, sheet.getLastRowNum(), 0, HEADERS.size() - 1);
             RegionUtil.setBorderLeft(BorderStyle.MEDIUM, region, sheet);
             RegionUtil.setBorderRight(BorderStyle.MEDIUM, region, sheet);
         } catch (Exception e) {
-            for(int i = 0; i <HEADERS.size();i++){
+            for (int i = 0; i < HEADERS.size(); i++) {
                 row.removeCell(row.getCell(i));
             }
             sheet.removeRow(row);

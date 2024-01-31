@@ -3,7 +3,10 @@ package com.example.demo.domainservices.jobStrategies;
 import com.example.demo.domain.common.PageResult;
 import com.example.demo.domain.exceptions.CriticalErrorException;
 import com.example.demo.domain.export.ExportCriteriaModel;
-import com.example.demo.domain.job.*;
+import com.example.demo.domain.job.JobModelPost;
+import com.example.demo.domain.job.JobModelReturn;
+import com.example.demo.domain.job.ProgressMessageModel;
+import com.example.demo.domain.job.TaskType;
 import com.example.demo.domain.job.params.SendEmailParams;
 import com.example.demo.domain.job.params.SendTelegramParams;
 import com.example.demo.domain.job.progress.ExportProgress;
@@ -32,7 +35,7 @@ public class UserExportJob extends BaseJob {
     private static final String FAILED_READ_PARAMS_EXCEPTION_MESSAGE = "Failed to read parameters";
     private static final String EXCEL_EXTENSION = ".xlsx";
     private static final String EMAIL_SUBJECT = "Экспорт пользователей";
-    private static final String SEND_TEXT= "Готов ваш экспорт пользователей от ";
+    private static final String SEND_TEXT = "Готов ваш экспорт пользователей от ";
     private static final String FILE_NAME_FOR_SEND = "Экспорт_пользователей";
     private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy HH-mm");
 
@@ -55,8 +58,7 @@ public class UserExportJob extends BaseJob {
             var file = new File(job.getJobId().toString());
             file.createNewFile();
             fileStream = new FileInputStream(job.getJobId().toString());
-        }
-        catch (Exception e){
+        } catch (Exception e) {
             throw new CriticalErrorException(e.getMessage());
         }
         UserExportWriterInterface writer;
@@ -101,7 +103,7 @@ public class UserExportJob extends BaseJob {
             throw new CriticalErrorException(e.getMessage());
         }
 
-        if(criteriaModel.isSendEmail()){
+        if (criteriaModel.isSendEmail()) {
             var sendJob = new JobModelPost();
             sendJob.setTaskType(TaskType.SEND_EMAIL);
 
@@ -118,7 +120,7 @@ public class UserExportJob extends BaseJob {
 
             jobService.addNew(sendJob);
         }
-        if(criteriaModel.isSendTelegram()){
+        if (criteriaModel.isSendTelegram()) {
             var sendJob = new JobModelPost();
             sendJob.setTaskType(TaskType.SEND_TELEGRAM);
 

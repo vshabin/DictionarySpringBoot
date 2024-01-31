@@ -13,14 +13,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.io.File;
-import java.util.*;
+import java.util.UUID;
 
 @Component
 public class AssociationsExportImpl implements ExportInterface {
 
-    private final String NOT_READY_ERROR_CODE="NOR_READY_ERROR_CODE";
-    private final String NOT_READY_ERROR_MESSAGE="Your file is not ready yet";
-    private static final String FILE_EXTENSION=".xlsx";
+    private final String NOT_READY_ERROR_CODE = "NOR_READY_ERROR_CODE";
+    private final String NOT_READY_ERROR_MESSAGE = "Your file is not ready yet";
+    private static final String FILE_EXTENSION = ".xlsx";
 
     @Autowired
     JobService jobService;
@@ -38,11 +38,10 @@ public class AssociationsExportImpl implements ExportInterface {
         byte[] file;
         try {
             file = FileUtils.readFileToByteArray(new File(taskId.toString()));
-        }
-        catch (Exception e){
+        } catch (Exception e) {
             return new ExportReturnModel(NOT_READY_ERROR_CODE, NOT_READY_ERROR_MESSAGE);
         }
-        return new ExportReturnModel(taskId.toString(),FILE_EXTENSION, file);
+        return new ExportReturnModel(taskId.toString(), FILE_EXTENSION, file);
     }
 
     @Override

@@ -33,7 +33,7 @@ import java.util.logging.Logger;
 @Component
 @Log4j2
 public class ApplicationStartup implements ApplicationRunner {
-    private static final Logger LOG= Logger.getLogger(String.valueOf(ApplicationStartup.class));
+    private static final Logger LOG = Logger.getLogger(String.valueOf(ApplicationStartup.class));
 
     @Value("${dbConnectionString}")
     private String dbConnectionString;
@@ -44,11 +44,11 @@ public class ApplicationStartup implements ApplicationRunner {
     @Value("${dbPassword}")
     private String dbPassword;
 
-    private String serverName="dictionary";
+    private String serverName = "dictionary";
 
-    private static HikariConfig config= new HikariConfig();
-    private static HikariDataSource ds= new HikariDataSource();
-    private static CurrentUserProvider userProvider= new UserProvider();
+    private static HikariConfig config = new HikariConfig();
+    private static HikariDataSource ds = new HikariDataSource();
+    private static CurrentUserProvider userProvider = new UserProvider();
 
     @Autowired
     DbServer dbServer;
@@ -63,9 +63,9 @@ public class ApplicationStartup implements ApplicationRunner {
         config.setUsername(dbUsername);
         config.setPassword(dbPassword);
 
-        ds=new HikariDataSource(config);
+        ds = new HikariDataSource(config);
 
-        var cfg= new DatabaseConfig();
+        var cfg = new DatabaseConfig();
         cfg.setAllQuotedIdentifiers(true);
         cfg.setExpressionNativeIlike(true);
         cfg.addPackage("com.example.demo.infrastructure.repositories");
@@ -75,9 +75,9 @@ public class ApplicationStartup implements ApplicationRunner {
         cfg.setCurrentUserProvider(userProvider);
         dbServer.setDB(DatabaseFactory.create(cfg));
 
-        DatabaseConnection databaseConnection= new JdbcConnection(ds.getConnection());
-        var database=liquibase.database.DatabaseFactory.getInstance().findCorrectDatabaseImplementation(databaseConnection);
-        Liquibase liquibase= new Liquibase("db/changelog/db.changelog-master.xml", (ResourceAccessor) new ClassLoaderResourceAccessor(), database);
+        DatabaseConnection databaseConnection = new JdbcConnection(ds.getConnection());
+        var database = liquibase.database.DatabaseFactory.getInstance().findCorrectDatabaseImplementation(databaseConnection);
+        Liquibase liquibase = new Liquibase("db/changelog/db.changelog-master.xml", (ResourceAccessor) new ClassLoaderResourceAccessor(), database);
         liquibase.update(new Contexts(), new LabelExpression());
 
     }

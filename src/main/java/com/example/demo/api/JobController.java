@@ -30,19 +30,19 @@ public class JobController {
 
     @PutMapping("/add")
     @PreAuthorize("hasAuthority('ADMIN')")
-    public GuidResultModel save(@Valid @RequestBody JobModelPost model){
+    public GuidResultModel save(@Valid @RequestBody JobModelPost model) {
         return service.addNew(model);
     }
 
     @PostMapping("/cancel/{id}")
     @PreAuthorize("hasAuthority('ADMIN')")
-    public GuidResultModel cancel(@PathVariable UUID id){
+    public GuidResultModel cancel(@PathVariable UUID id) {
         return service.cancel(id);
     }
 
     @GetMapping("/criteria")
     @PreAuthorize("isAuthenticated()")
-    public PageResult<JobEnrichedModel> criteriaQuery(@RequestBody JobCriteriaModel model){
+    public PageResult<JobEnrichedModel> criteriaQuery(@RequestBody JobCriteriaModel model) {
         return service.criteriaQuery(model);
     }
 }

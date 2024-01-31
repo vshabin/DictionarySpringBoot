@@ -6,7 +6,6 @@ import org.springframework.amqp.rabbit.connection.CachingConnectionFactory;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitAdmin;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
-import org.springframework.amqp.rabbit.listener.SimpleMessageListenerContainer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -36,22 +35,24 @@ public class RabbitMQConfig {
     public Queue defaultQueue() {
         return new Queue(DEFAULT_QUEUE_NAME);
     }
+
     @Bean
     public Queue telegramQueue() {
         return new Queue(TELEGRAM_QUEUE_NAME);
     }
+
     @Bean
     public DirectExchange directExchange() {
         return new DirectExchange(DIRECT_EXCHANGE);
     }
 
     @Bean
-    public Binding defaultQueueBinding(){
+    public Binding defaultQueueBinding() {
         return BindingBuilder.bind(defaultQueue()).to(directExchange()).with(DEFAULT_QUEUE_NAME);
     }
 
     @Bean
-    public Binding telegramQueueBinding(){
+    public Binding telegramQueueBinding() {
         return BindingBuilder.bind(telegramQueue()).to(directExchange()).with(TELEGRAM_QUEUE_NAME);
     }
 

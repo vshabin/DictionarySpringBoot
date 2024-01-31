@@ -47,11 +47,11 @@ public class UserService {
         return repository.exists(login);
     }
 
-    public List<UserModelReturn> getUserListByIdSet(Set<UUID> ids){
+    public List<UserModelReturn> getUserListByIdSet(Set<UUID> ids) {
         return repository.getUserListByIdList(ids);
     }
 
-    public List<UserModelReturn> getFilteredList(UserCriteriaModel criteriaModel){
+    public List<UserModelReturn> getFilteredList(UserCriteriaModel criteriaModel) {
         return repository.getFilteredList(criteriaModel);
     }
 
