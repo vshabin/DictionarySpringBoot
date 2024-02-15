@@ -101,7 +101,13 @@ public class LanguageRepository {
     }
 
     public PageResult<LanguageModelReturn> criteriaQuery(LanguageCriteriaModel languageCriteriaModel) {
-        PagedList<LanguageEntity> entityPagedList = createExpression(languageCriteriaModel, dbServer.getDB().find(LanguageEntity.class).setFirstRow(languageCriteriaModel.getSize() * (languageCriteriaModel.getPageNumber() - 1)).setMaxRows(languageCriteriaModel.getSize()).where()).findPagedList();
+        PagedList<LanguageEntity> entityPagedList = createExpression(languageCriteriaModel,
+                dbServer.getDB()
+                .find(LanguageEntity.class)
+                        .setFirstRow(languageCriteriaModel.getSize() * (languageCriteriaModel.getPageNumber() - 1))
+                        .setMaxRows(languageCriteriaModel.getSize())
+                        .where())
+                .findPagedList();
         return new PageResult<>(mapStructMapper.toLanguageModelReturnList(entityPagedList.getList()), entityPagedList.getTotalCount());
     }
 

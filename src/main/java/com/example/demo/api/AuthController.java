@@ -8,6 +8,7 @@ import com.example.demo.domainservices.AuthService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.security.PermitAll;
 import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -22,7 +23,7 @@ import javax.inject.Inject;
 @Tag(name = "Auth", description = "Auth management APIs")
 @Validated
 public class AuthController {
-    @Inject
+    @Autowired
     private AuthService service;
 
     @PostMapping("/login")

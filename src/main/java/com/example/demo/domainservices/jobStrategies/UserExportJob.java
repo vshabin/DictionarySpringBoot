@@ -15,6 +15,7 @@ import com.example.demo.domain.user.UserModelReturn;
 import com.example.demo.domainservices.JobService;
 import com.example.demo.domainservices.UserService;
 import com.example.demo.domainservices.jobStrategies.ExportWriters.UserExportExcelWriter;
+import com.example.demo.domainservices.jobStrategies.ExportWriters.UserExportPdfWriter;
 import com.example.demo.domainservices.jobStrategies.ExportWriters.UserExportWriterInterface;
 import com.example.demo.infrastructure.JsonUtils;
 import lombok.extern.log4j.Log4j2;
@@ -34,6 +35,7 @@ public class UserExportJob extends BaseJob {
     private static final String FILE_IS_EMPTY_ERROR_MESSAGE = "Файл результата пуст";
     private static final String FAILED_READ_PARAMS_EXCEPTION_MESSAGE = "Failed to read parameters";
     private static final String EXCEL_EXTENSION = ".xlsx";
+    private static final String PDF_EXTENSION = ".pdf";
     private static final String EMAIL_SUBJECT = "Экспорт пользователей";
     private static final String SEND_TEXT = "Готов ваш экспорт пользователей от ";
     private static final String FILE_NAME_FOR_SEND = "Экспорт_пользователей";
@@ -66,6 +68,9 @@ public class UserExportJob extends BaseJob {
             case EXCEL_EXTENSION:
                 writer = new UserExportExcelWriter(fileStream);
                 break;
+            case PDF_EXTENSION:
+                writer = new UserExportPdfWriter(userService.getById(job.getCreatorUserId()).getLogin());
+                break;
             default:
                 throw new CriticalErrorException("Unknown file extension");
         }
@@ -96,8 +101,7 @@ public class UserExportJob extends BaseJob {
 
         writer.postWrite();
 
-        try {
-            FileOutputStream fos = new FileOutputStream(job.getJobId().toString());
+        try ( FileOutputStream fos = new FileOutputStream(job.getJobId().toString())){
             writer.write(fos);
         } catch (Exception e) {
             throw new CriticalErrorException(e.getMessage());

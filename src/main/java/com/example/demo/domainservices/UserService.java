@@ -6,6 +6,9 @@ import com.example.demo.domain.user.UserCriteriaModel;
 import com.example.demo.domain.user.UserModelPost;
 import com.example.demo.domain.user.UserModelReturn;
 import com.example.demo.infrastructure.repositories.user.UserRepository;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -54,7 +57,6 @@ public class UserService {
     public List<UserModelReturn> getFilteredList(UserCriteriaModel criteriaModel) {
         return repository.getFilteredList(criteriaModel);
     }
-
     public PageResult<UserModelReturn> getPage(UserCriteriaModel userCriteriaModel) {
         return repository.getPage(userCriteriaModel);
     }

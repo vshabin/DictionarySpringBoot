@@ -1,0 +1,20 @@
+<html xmlns:th="http://www.thymeleaf.org" lang="ru">
+<head>
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, Arial Bold;
+            font-size: 10px;
+            line-height: 14px;
+        }
+    </style>
+    <title>USER_EXPORT</title>
+</head>
+<body>
+<h3 style="text-align: center">
+    <span th:utext="'Привет, ' + ${username} + '!'"></span>
+    <span th:utext="'Вот твой экспорт пользователей от ' + ${time} + '!'"></span>
+</h3>
+</body>
+</html>

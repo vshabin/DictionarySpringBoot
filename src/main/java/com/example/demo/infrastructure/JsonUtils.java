@@ -10,7 +10,7 @@ import java.util.Optional;
 
 
 public class JsonUtils {
-    private static final ObjectMapper objectMapper = new ObjectMapper()
+    public static final ObjectMapper objectMapper = new ObjectMapper()
             .findAndRegisterModules()
             .registerModule(new JavaTimeModule())
             .enable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)

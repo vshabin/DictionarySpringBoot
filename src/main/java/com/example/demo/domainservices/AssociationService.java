@@ -6,6 +6,10 @@ import com.example.demo.domain.common.GuidResultModel;
 import com.example.demo.domain.common.PageResult;
 import com.example.demo.domain.word.WordModelReturn;
 import com.example.demo.infrastructure.repositories.association.AssociationRepository;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -15,6 +19,7 @@ import java.util.List;
 import java.util.UUID;
 
 @Service
+@EnableCaching
 public class AssociationService {
     private static final String PAIR_ALREADY_EXISTS_ERROR_CODE = "PAIR_ALREADY_EXISTS";
     private static final String PAIR_ALREADY_EXISTS_ERROR_MESSAGE = "Такая пара слов уже существует: ";
@@ -34,10 +39,12 @@ public class AssociationService {
     @Inject
     LanguageService languageService;
 
+    @Cacheable(value = "associations", key = "#id")
     public AssociationModelReturn getById(UUID id) {
         return repository.findById(id);
     }
 
+    @CacheEvict(value = "associations", allEntries = true)
     public GuidResultModel save(AssociationModelAdd model) {
         if (repository.getAllAssociations(model.getWord()).contains(model.getTranslation())) {
             return new GuidResultModel(PAIR_ALREADY_EXISTS_ERROR_CODE, PAIR_ALREADY_EXISTS_ERROR_MESSAGE + model.getWord() + " : " + model.getTranslation());
@@ -48,13 +55,14 @@ public class AssociationService {
         return repository.save(model);
     }
 
+    @CachePut(value = "associations", key = "#model.id")
     public AssociationModelReturn update(AssociationModelReturn model) {
         if (!repository.exists(model.getId())) {
             return new AssociationModelReturn(ASSOCIATION_ID_NOT_EXIST_ERROR_CODE, ASSOCIATION_ID_NOT_EXIST_ERROR_MESSAGE + model.getId());
         }
         return repository.update(model);
     }
-
+    @CacheEvict(value = "associations", key = "#id")
     public GeneralResultModel delete(UUID id) {
         if (!repository.exists(id)) {
             return new AssociationModelReturn(ASSOCIATION_ID_NOT_EXIST_ERROR_CODE, ASSOCIATION_ID_NOT_EXIST_ERROR_MESSAGE + id);

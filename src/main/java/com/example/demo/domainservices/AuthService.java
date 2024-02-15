@@ -8,9 +8,9 @@ import com.example.demo.domain.user.UserModelReturn;
 import com.example.demo.infrastructure.repositories.auth.SessionRepository;
 import com.example.demo.security.SecurityConst;
 import com.example.demo.security.SecurityConst.Role;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import javax.inject.Inject;
 import java.util.UUID;
 
 @Service
@@ -21,11 +21,11 @@ public class AuthService {
     private static final String INCORRECT_PASSWORD_MESSAGE = "Incorrect password";
     private static final String INCORRECT_REFRESH_TOKEN_CODE = "INCORRECT_REFRESH_TOKEN_CODE";
     private static final String INCORRECT_REFRESH_TOKEN_MESSAGE = "Incorrect refresh token";
-    @Inject
+    @Autowired
     private SessionRepository repository;
-    @Inject
+    @Autowired
     private JwtProvider tokenProvider;
-    @Inject
+    @Autowired
     private UserService userService;
 
     public JwtResponse login(JwtRequest request) {
@@ -40,7 +40,12 @@ public class AuthService {
         var accessToken = tokenProvider.generateAccessToken(user.getLogin(), user.getId(), sessionId, user.getRole());
         var refreshToken = tokenProvider.generateRefreshToken(user.getLogin(), user.getId(), sessionId);
 
-        repository.save(sessionId, refreshToken, tokenProvider.getRefreshClaims(refreshToken).getExpiration(), accessToken, tokenProvider.getAccessClaims(accessToken).getExpiration(), user.getId());
+        repository.save(sessionId,
+                refreshToken,
+                tokenProvider.getRefreshClaims(refreshToken).getExpiration(),
+                accessToken,
+                tokenProvider.getAccessClaims(accessToken).getExpiration(),
+                user.getId());
         return new JwtResponse(accessToken, refreshToken, "", "");
     }
 

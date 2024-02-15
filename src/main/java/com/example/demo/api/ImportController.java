@@ -6,6 +6,7 @@ import com.example.demo.domain.fileImport.ImportType;
 import com.example.demo.domainservices.ImportService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,7 +21,7 @@ import java.util.UUID;
 @RequestMapping("/import")
 @Tag(name = "Import", description = "Data import APIs")
 public class ImportController {
-    @Inject
+    @Autowired
     private ImportService service;
 
     @PostMapping()

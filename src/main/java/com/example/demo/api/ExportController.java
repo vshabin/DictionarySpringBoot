@@ -7,6 +7,7 @@ import com.example.demo.domainservices.ExportService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -21,7 +22,7 @@ import java.util.UUID;
 @RequestMapping("/export")
 @Tag(name = "Export", description = "Data export APIs")
 public class ExportController {
-    @Inject
+    @Autowired
     private ExportService service;
 
     @PostMapping()

@@ -10,6 +10,7 @@ import com.example.demo.infrastructure.repositories.MapperInterfaces.UserMapper;
 import io.ebean.ExpressionList;
 import io.ebean.annotation.Transactional;
 import io.micrometer.common.util.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
 import javax.inject.Inject;
@@ -23,9 +24,9 @@ public class UserRepository {
     private static final String DATABASE_TRANSACTION_ERROR_CODE = "DATABASE_TRANSACTION_ERROR_CODE";
     private static final String DATABASE_TRANSACTION_ERROR_MESSAGE = "Ошибка проведения транзакции: ";
 
-    @Inject
+    @Autowired
     DbServer dbServer;
-    @Inject
+    @Autowired
     UserMapper mapStructMapper;
 
 

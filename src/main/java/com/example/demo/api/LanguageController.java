@@ -10,6 +10,7 @@ import com.example.demo.domainservices.LanguageService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -23,7 +24,7 @@ import java.util.UUID;
 @Tag(name = "Languages", description = "Languages management APIs")
 @Validated
 public class LanguageController {
-    @Inject
+    @Autowired
     private LanguageService service;
 
     @PutMapping(value = "/add")
